@@ -1,0 +1,22 @@
+{
+  "id": "bar-chart-sample",
+  "name": "Bar Chart Sample",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma", "figjam"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://static.figma.com/api/figma-extension-api-0.0.1.css",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com"
+    ]
+  },
+  "documentAccess": "dynamic-page"
+  ,
+    "devDependencies": {
+      "@typescript-eslint/eslint-plugin": "^5.10.0",
+      "@typescript-eslint/parser": "^5.10.0",
+      "@figma/eslint-plugin-figma-plugins": "^1.0.0"
+    }
+}
