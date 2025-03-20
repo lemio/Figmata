@@ -44,7 +44,7 @@ figma.ui.onmessage =  async (msg: {code: string}) => {
           console.log(family, style);
           return figma.loadFontAsync({ family, style }).catch(e => console.error(e));
         })
-        //await Promise.all(fonts)
+        await Promise.all(fonts)
         
     let originalChildren = FigmaFrame.children
     originalChildren.slice(1).forEach(child => {
