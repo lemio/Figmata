@@ -14,9 +14,57 @@ figma.ui.resize(600, 1000);
 figma.ui.onmessage =  async (msg: any) => {
   console.log(msg);
 }*/
+
+function debounce(callback: () => void, timeout: number) {
+  let timer: any;
+  return (...args: []) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      callback.apply(this, args);
+    }, timeout);
+  };
+}
 figma.ui.onmessage =  async (msg: {code: string}) => {
-  eval(msg.code)
+  const selection: any = figma.currentPage.selection[0]
+  selection.setPluginData('code',msg.code)
   
+  //selection.setRelaunchData({'edit': 'test'})
+  const debouncedFunction =  debounce(() =>{
+    try {
+      eval(`//figmata.init()
+    function delay(ms){
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+      async () =>  {
+    let FigmaFrame = figma.currentPage.selection[0]
+    let FirstChild = FigmaFrame.children[0];
+    //await Promise.all([figma.loadFontAsync({family: "Roboto", style: "Regular"}),figma.loadFontAsync({ family: "Inter", style: "Regular" })]);
+    let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
+          const [family, style] = font.split('***');
+          console.log(family, style);
+          return figma.loadFontAsync({ family, style }).catch(e => console.error(e));
+        })
+        //await Promise.all(fonts)
+        
+    let originalChildren = FigmaFrame.children
+    originalChildren.slice(1).forEach(child => {
+        child.remove();
+      });
+      delay(100)
+    ${msg.code}
+    delay(1)
+    originalChildren.slice(0,1).forEach(child => {
+        console.log(child)
+        child.remove();
+      });
+      }()
+      delay(1)
+    `)
+      }catch(error){
+        console.log(error)
+      }
+  },100)
+  debouncedFunction()
 }
 /*
 figma.ui.onmessage =  async (msg: {type: string, count: number}) => {
@@ -129,15 +177,34 @@ figma.ui.onmessage =  async (msg: {type: string, count: number}) => {
   //figma.closePlugin();
 */
 
-  figma.on("selectionchange", async () => {
+
+  const makeFigmata = async () => {
+    //get the button that was clicked
     const selection: any = figma.currentPage.selection[0];
+    selection.setRelaunchData({'edit': 'test', 'reset': 'yes'})
+    console.log(selection.type)
+    if (selection.type === 'FRAME'){
+      
+      console.log(figma.command)
+      if (figma.command === 'reset'){
+        selection.setPluginData('code','')
+      }
+    if (selection.getPluginData('code') !== ''){
+      figma.ui.postMessage({
+        test:selection.getPluginData('code'),
+      });
+      return;
+    }
+    
+
+    
     const firstElement:any = selection.children[0]
 
     var propertiesString = ''
     for (const [key, value] of Object.entries(firstElement.componentProperties)) {
       const mainComponent = await firstElement.getMainComponentAsync()
-      const options = mainComponent.parent.componentPropertyDefinitions["Property 1"].variantOptions.join(",")
-      propertiesString += `\telement.editComponentProperty("${key}","${value.value}") \n\t//${options}\n`
+      const options = mainComponent.parent.componentPropertyDefinitions[key].variantOptions.join(",")
+      propertiesString += `\telement.setProperties({"${key}":"${value.value}"}) \n\t//${options}\n`
     }
     var childrenString = ''
     var elements = firstElement.children.slice()
@@ -156,17 +223,6 @@ figma.ui.onmessage =  async (msg: {type: string, count: number}) => {
       childrenString += "\n"
     })
     const code = `
-//figmata.init()
-  async () =>  {
-let FigmaFrame = figma.currentPage.selection[0]
-let FirstChild = FigmaFrame.children[0];
-let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
-      const [family, style] = font.split('***');
-      console.log(family, style);
-      return figma.loadFontAsync({ family, style }).catch(e => console.error(e));
-    })
-    await Promise.all(fonts)
-let originalChildren = FigmaFrame.children
 let data = [
     { "Quantity": 10, "Price": 100 },
     { "Quantity": 20, "Price": 200 },
@@ -175,21 +231,17 @@ let data = [
     { "Quantity": 15, "Price": 150 }
   ]
 data.forEach((row) => {
-console.log(row)
-\tlet element = FirstChild.clone();
-console.log(element)
-//\tlet element = figmata.clone() //${firstElement.name}
+\tlet element = FirstChild.clone(); //${firstElement.name}
 \telement.resize(${firstElement.absoluteBoundingBox.width},${firstElement.absoluteBoundingBox.height})
 ${propertiesString}${childrenString}
 FigmaFrame.appendChild(element)
 })
-originalChildren.forEach(child => {
-    console.log(child)
-    child.remove();
-  });
-  }()`
+`
       figma.ui.postMessage({
         test:code,
       });
     }
-  )
+  }
+
+  figma.on("run",makeFigmata)
+  figma.on("selectionchange",makeFigmata)

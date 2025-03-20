@@ -14,5 +14,10 @@
     "allowedDomains": [
       "https://cdnjs.cloudflare.com"
     ]
-  }
+  },
+  "relaunchButtons": [
+  {"command": "edit", "name": "Edit figmata"},
+  {"command": "reset", "name": "Reset code"}
+
+]
 }
