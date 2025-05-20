@@ -14,9 +14,8 @@ figma.ui.resize(600, 1000);
 figma.ui.onmessage =  async (msg: any) => {
   console.log(msg);
 }*/
-
+let timer: any;
 function debounce(callback: () => void, timeout: number) {
-  let timer: any;
   return (...args: []) => {
     clearTimeout(timer);
     timer = setTimeout(() => {
@@ -42,23 +41,25 @@ figma.ui.onmessage =  async (msg: {code: string}) => {
     let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
           const [family, style] = font.split('***');
           console.log(family, style);
-          return figma.loadFontAsync({ family, style }).catch(e => console.error(e));
+          return { family, style }
         })
-        await Promise.all(fonts)
+    await fonts.forEach(async font => {
+      await figma.loadFontAsync({ family:font.family, style: font.style }).catch(e => console.error(e));
+    })
         
     let originalChildren = FigmaFrame.children
     originalChildren.slice(1).forEach(child => {
         child.remove();
       });
-      delay(100)
+      
     ${msg.code}
-    delay(1)
+    
     originalChildren.slice(0,1).forEach(child => {
         console.log(child)
         child.remove();
       });
       }()
-      delay(1)
+      
     `)
       }catch(error){
         console.log(error)
