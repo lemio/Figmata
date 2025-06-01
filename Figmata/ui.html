@@ -2801,6 +2801,9 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           if (event.data.pluginMessage?.test !== undefined){
             editor.setValue(event.data.pluginMessage.test)
           }
+          if (event.data.pluginMessage?.type === 'error'){
+            alert(event.data.pluginMessage.error)
+          }
         }
 
         </script>

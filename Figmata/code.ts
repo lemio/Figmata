@@ -1,4 +1,4 @@
-
+//@ts-nocheck
 // This plugin will open a window to prompt the user to enter a number, and
 // it will then create that many rectangles on the screen.
 
@@ -30,39 +30,42 @@ figma.ui.onmessage =  async (msg: {code: string}) => {
   //selection.setRelaunchData({'edit': 'test'})
   const debouncedFunction =  debounce(() =>{
     try {
-      eval(`//figmata.init()
-    function delay(ms){
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-      async () =>  {
-    let FigmaFrame = figma.currentPage.selection[0]
-    let FirstChild = FigmaFrame.children[0];
-    //await Promise.all([figma.loadFontAsync({family: "Roboto", style: "Regular"}),figma.loadFontAsync({ family: "Inter", style: "Regular" })]);
-    let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
-          const [family, style] = font.split('***');
-          console.log(family, style);
-          return { family, style }
-        })
-    await fonts.forEach(async font => {
-      await figma.loadFontAsync({ family:font.family, style: font.style }).catch(e => console.error(e));
-    })
-        
-    let originalChildren = FigmaFrame.children
-    originalChildren.slice(1).forEach(child => {
-        child.remove();
-      });
+      async () => {
+      function delay(ms){
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
       
-    ${msg.code}
-    
-    originalChildren.slice(0,1).forEach(child => {
+      let FigmaFrame = figma.currentPage.selection[0]
+      let FirstChild = FigmaFrame.children[0];
+      //await Promise.all([figma.loadFontAsync({family: "Roboto", style: "Regular"}),figma.loadFontAsync({ family: "Inter", style: "Regular" })]);
+      let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
+            const [family, style] = font.split('***');
+            console.log(family, style);
+            return { family, style }
+          })
+      await fonts.forEach(async font => {
+        await figma.loadFontAsync({ family:font.family, style: font.style }).catch(e => console.error(e));
+      })
+          
+      let originalChildren = FigmaFrame.children
+      originalChildren.slice(1).forEach(child => {
+          child.remove();
+        });
+      eval(msg.code)
+      originalChildren.slice(0,1).forEach(child => {
         console.log(child)
         child.remove();
       });
-      }()
-      
-    `)
+      }
       }catch(error){
-        console.log(error)
+        //Make sure this error messages is shown to the user:
+        figma.ui.postMessage({
+          error: String(error),
+          type: 'error',
+          line: error.lineNumber,
+          column: error.columnNumber
+        });
+        console.log("MAYOR ISSUE",error)
       }
   },100)
   debouncedFunction()

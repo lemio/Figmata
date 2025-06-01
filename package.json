@@ -22,6 +22,7 @@
         }
     },
     "dependencies": {
-        "monaco-editor": "^0.52.2"
+        "monaco-editor": "^0.52.2",
+        "typescript": "^5.8.3"
     }
 }
