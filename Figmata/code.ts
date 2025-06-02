@@ -26,7 +26,10 @@ function debounce(callback: () => void, timeout: number) {
 figma.ui.onmessage =  async (msg: {code: string}) => {
   const selection: any = figma.currentPage.selection[0]
   selection.setPluginData('code',msg.code)
-  
+  figma.ui.postMessage({
+    type: 'error',
+    error: '',
+  });
   //selection.setRelaunchData({'edit': 'test'})
   const debouncedFunction =  debounce(() =>{
     try {
@@ -43,10 +46,15 @@ figma.ui.onmessage =  async (msg: {code: string}) => {
           console.log(family, style);
           return { family, style }
         })
-    await fonts.forEach(async font => {
-      await figma.loadFontAsync({ family:font.family, style: font.style }).catch(e => console.error(e));
-    })
-        
+          console.log("Fonts", fonts)
+    try {
+      for (const font of fonts) {
+        await figma.loadFontAsync({ family: font.family, style: font.style });
+      }
+      console.log("Fonts loaded");
+    } catch (e) {
+      console.error("font error", e);
+    }
     let originalChildren = FigmaFrame.children
     originalChildren.slice(1).forEach(child => {
         child.remove();
@@ -61,9 +69,15 @@ figma.ui.onmessage =  async (msg: {code: string}) => {
       }()
       
     `)
-      }catch(error){
-        console.log(error)
+      }catch(error:any){
+        figma.ui.postMessage({
+          type: 'error',
+          error: String(error),
+          line: error.lineNumber - 27,
+        });
+        console.log("SYNTAX ERROR", error)
       }
+      
   },100)
   debouncedFunction()
 }

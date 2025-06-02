@@ -2798,6 +2798,26 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
         });
         window.onmessage = (event) => {
           console.log(event.data.pluginMessage)
+          if (event.data.pluginMessage?.type  === 'error'){
+            console.log("received error")
+            monaco.editor.setModelMarkers(editor.getModel(), 'owner', 
+            [{
+				message: event.data.pluginMessage.error,
+				severity: monaco.MarkerSeverity.Warning,
+				startLineNumber: event.data.pluginMessage.line,
+				startColumn: 1,
+				endLineNumber: event.data.pluginMessage.line,
+				endColumn: 100,
+			}]
+            /*[{
+              startLineNumber: event.data.pluginMessage.line || 1,
+              startColumn: event.data.pluginMessage.column || 1,
+              endLineNumber: event.data.pluginMessage.line || 2,
+              endColumn: event.data.pluginMessage.column || 100,
+              message: event.data.pluginMessage.message,
+              severity: monaco.MarkerSeverity.Error
+            }]);*/)
+          }
           if (event.data.pluginMessage?.test !== undefined){
             editor.setValue(event.data.pluginMessage.test)
           }
