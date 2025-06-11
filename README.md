@@ -9,7 +9,7 @@ A plugin for Figma to visualize data from json or csv
 
 # Backlog
 
-* [ ] Add TSV parsing function to the default
+* [x] Add TSV parsing function to the default
 
   * [ ] Have a safer function for scaling (where 0 is allowed, where it scales related to how it is auto aligned to the frame... , changing the characters allow for numbers, colour allow for HEX names or RGB etc d3 schemes https://d3js.org/d3-scale-chromatic/categorical
 * [ ] Add more deliberite choise on what you are currently editing (and how to switch between contexts), currently the focus is not sufficient since users might start chaning elements in the meantime.

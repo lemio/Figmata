@@ -1,3 +1,7 @@
+/* eslint-disable no-inner-declarations */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-var */
 
 // This plugin will open a window to prompt the user to enter a number, and
 // it will then create that many rectangles on the screen.
@@ -15,25 +19,45 @@ figma.ui.onmessage =  async (msg: any) => {
   console.log(msg);
 }*/
 let timer: any;
-function debounce(callback: () => void, timeout: number) {
-  return (...args: []) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      callback.apply(this, args);
-    }, timeout);
-  };
+function test() {
+                console.log("test");
 }
-figma.ui.onmessage =  async (msg: {code: string}) => {
-  const selection: any = figma.currentPage.selection[0]
-  selection.setPluginData('code',msg.code)
-  figma.ui.postMessage({
-    type: 'error',
-    error: '',
-  });
-  //selection.setRelaunchData({'edit': 'test'})
-  const debouncedFunction =  debounce(() =>{
-    try {
-      eval(`//figmata.init()
+
+      const prependCode = `
+      /*
+    console.log = function(...args) {
+      figma.ui.postMessage({
+        type: 'log',
+    message: args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '),
+    line: 0,
+    });
+};*/
+        function parseTSV(tsvText) {
+  const lines = tsvText.trim().split('\\n');
+  if (lines.length === 0) return [];
+
+  const headers = lines[0].split('\\t');
+  const data = {};
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split('\\t');
+      /*
+    if (values.length !== headers.length) {
+      // Optionally skip malformed rows
+      continue;
+    }*/
+
+    const row = {};
+
+    for (let j = 1; j<= headers.length; j++) {
+      row[headers[j-1]] = values[j]||"";
+    }
+    data[values[0]] = row;
+  }
+
+  return data;
+}
+        //figmata.init()
     function delay(ms){
       return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -59,21 +83,44 @@ figma.ui.onmessage =  async (msg: {code: string}) => {
     originalChildren.slice(1).forEach(child => {
         child.remove();
       });
-      
-    ${msg.code}
-    
-    originalChildren.slice(0,1).forEach(child => {
+      `
+function debounce(callback: () => void, timeout: number) {
+  return function(this: any, ...args: []) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      callback.apply(this, args);
+    }, timeout);
+  };
+}
+figma.ui.onmessage =  async (msg: {code: string}) => {
+  const selection: any = figma.currentPage.selection[0]
+  selection.setPluginData('code',msg.code)
+  figma.ui.postMessage({
+    type: 'error',
+    error: '',
+  });
+  //selection.setRelaunchData({'edit': 'test'})
+  const debouncedFunction =  debounce(() =>{
+    try {
+
+      const postCode = `
+      originalChildren.slice(0,1).forEach(child => {
         console.log(child)
         child.remove();
       });
-      }()
-      
-    `)
+      }()`
+      eval(prependCode + msg.code + postCode).catch((error:any) => {
+        figma.ui.postMessage({
+          type: 'error',
+          error: String(error),
+          line: error.lineNumber - prependCode.split('\n').length + 1, // Adjust line number based on prependCode
+        });
+      });
       }catch(error:any){
         figma.ui.postMessage({
           type: 'error',
           error: String(error),
-          line: error.lineNumber - 27,
+          line: error.lineNumber - prependCode.split('\n').length + 1,
         });
         console.log("SYNTAX ERROR", error)
       }
@@ -216,11 +263,12 @@ figma.ui.onmessage =  async (msg: {type: string, count: number}) => {
     const firstElement:any = selection.children[0]
 
     var propertiesString = ''
-    for (const [key, value] of Object.entries(firstElement.componentProperties)) {
+    /*
+    for (const [key, property] of Object.entries(firstElement.componentProperties)) {
       const mainComponent = await firstElement.getMainComponentAsync()
       const options = mainComponent.parent.componentPropertyDefinitions[key].variantOptions.join(",")
-      propertiesString += `\telement.setProperties({"${key}":"${value.value}"}) \n\t//${options}\n`
-    }
+      propertiesString += `\telement.setProperties({"${key}":"${property.value}"}) \n\t//${options}\n`
+    }*/
     var childrenString = ''
     var elements = firstElement.children.slice()
     elements.reverse().forEach((child:any) => {

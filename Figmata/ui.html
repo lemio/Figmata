@@ -9,6 +9,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/loader.js"></script>
     <script>
+      logs = []
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs' }});
         var figmaTypes = `
 /* plugin-typings are auto-generated. Do not update them directly. See plugin-docs/ for instructions. */
@@ -2759,6 +2760,30 @@ interface FindAllCriteria<T extends NodeType[]> {
     keys?: string[]
   }
 }
+function parseTSV(tsvText: string): { [key: string]: any }[] {
+  const lines = tsvText.trim().split('\n');
+  if (lines.length === 0) return [];
+
+  const headers = lines[0].split('\t');
+  const data: { [key: string]: any }[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split('\t');
+      /*
+    if (values.length !== headers.length) {
+      // Optionally skip malformed rows
+      continue;
+    }*/
+
+    const row: { [key: string]: any } = {};
+
+    for (let j = 0; j < headers.length; j++) {
+      row[headers[j]] = values[j] || "";
+    }
+    data.push(row);
+  }
+  return data;
+}
 `
 var editor
         require(['vs/editor/editor.main'], function() {
@@ -2822,6 +2847,24 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
               message: event.data.pluginMessage.message,
               severity: monaco.MarkerSeverity.Error
             }]);*/)
+          }
+          if (event.data.pluginMessage?.type === 'success'){
+            console.log("received success")
+            //monaco.editor.setModelMarkers(editor.getModel(), 'owner', [])
+          }
+          
+          if (event.data.pluginMessage?.type === 'log'){
+            logs.push(event.data.pluginMessage)
+            monaco.editor.setModelMarkers(editor.getModel(), 'owner', logs.map((log, index) => {
+              return {
+                message: log.message,
+                severity: monaco.MarkerSeverity.Info,
+                startLineNumber: log.line ,
+                startColumn: 1,
+                endLineNumber: log.line,
+                endColumn: 100
+              }
+            }))
           }
           if (event.data.pluginMessage?.test !== undefined){
             editor.setValue(event.data.pluginMessage.test)
