@@ -29,6 +29,10 @@ A plugin for Figma to visualize data from json or csv
   * [ ] Have prompt based coupling between raw data and parsed data for visualisation
     * [ ] Try out this concept within GPT
 
+Sketch of how it could be: 
+![image](https://github.com/user-attachments/assets/70de0dcf-3cee-4cbf-9c1f-c021704061aa)
+
+
 
 Below are the steps to get your plugin running. You can also find instructions at:
 
