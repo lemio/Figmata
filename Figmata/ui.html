@@ -2759,6 +2759,7 @@ interface FindAllCriteria<T extends NodeType[]> {
     keys?: string[]
   }
 }
+type ParseTSVFunction = (tsvString: string) => Record<string, string>[];
 `
 var editor
         require(['vs/editor/editor.main'], function() {
