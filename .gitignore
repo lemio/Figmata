@@ -1,1 +1,8 @@
-node_modules/*
+# Node
+*.log
+*.log.*
+node_modules
+
+out/
+dist/
+code.js
