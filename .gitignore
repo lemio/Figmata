@@ -6,3 +6,7 @@ node_modules
 out/
 dist/
 code.js
+
+# Generated files
+src/**/*.js
+src/**/*.js.map
