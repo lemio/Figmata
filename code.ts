@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-var */
 
+import { utilityFunctions } from './src/utils';
+
 // This plugin will open a window to prompt the user to enter a number, and
 // it will then create that many rectangles on the screen.
 
@@ -23,7 +25,7 @@ function test() {
                 console.log("test");
 }
 
-      const prependCode = `
+      const contextSetup = `
       /*
     console.log = function(...args) {
       figma.ui.postMessage({
@@ -32,36 +34,8 @@ function test() {
     line: 0,
     });
 };*/
-        function parseTSV(tsvText) {
-  const lines = tsvText.trim().split('\\n');
-  if (lines.length === 0) return [];
-
-  const headers = lines[0].split('\\t');
-  const data = {};
-
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split('\\t');
-      /*
-    if (values.length !== headers.length) {
-      // Optionally skip malformed rows
-      continue;
-    }*/
-
-    const row = {};
-
-    for (let j = 1; j<= headers.length; j++) {
-      row[headers[j-1]] = values[j]||"";
-    }
-    data[values[0]] = row;
-  }
-
-  return data;
-}
         //figmata.init()
-    function delay(ms){
-      return new Promise(resolve => setTimeout(resolve, ms));
-    }
-      async () =>  {
+      return (async () =>  {
     let FigmaFrame = figma.currentPage.selection[0]
     let FirstChild = FigmaFrame.children[0];
     //await Promise.all([figma.loadFontAsync({family: "Roboto", style: "Regular"}),figma.loadFontAsync({ family: "Inter", style: "Regular" })]);
@@ -108,19 +82,36 @@ figma.ui.onmessage =  async (msg: {code: string}) => {
         console.log(child)
         child.remove();
       });
-      }()`
-      eval(prependCode + msg.code + postCode).catch((error:any) => {
+      })();`
+      
+      // Create context with utility functions and figma globals
+      const context = {
+        ...utilityFunctions,
+        figma,
+        console,
+        Promise,
+        setTimeout,
+        clearTimeout
+      };
+      
+      // Create parameter names and values from context
+      const paramNames = Object.keys(context);
+      const paramValues = Object.values(context);
+      
+      // Create and execute function with context
+      const executeCode = new Function(...paramNames, contextSetup + msg.code + postCode);
+      executeCode(...paramValues).catch((error:any) => {
         figma.ui.postMessage({
           type: 'error',
           error: String(error),
-          line: error.lineNumber - prependCode.split('\n').length + 1, // Adjust line number based on prependCode
+          line: error.lineNumber - contextSetup.split('\n').length + 1, // Adjust line number based on contextSetup
         });
       });
       }catch(error:any){
         figma.ui.postMessage({
           type: 'error',
           error: String(error),
-          line: error.lineNumber - prependCode.split('\n').length + 1,
+          line: error.lineNumber - contextSetup.split('\n').length + 1,
         });
         console.log("SYNTAX ERROR", error)
       }
