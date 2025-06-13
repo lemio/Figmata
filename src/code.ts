@@ -3,8 +3,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-var */
 
+import { resize } from './utils/figmaHelpers';
 import { utilityFunctions } from './utils';
-import type { MessageData, UIMessage, ExecutionContext } from './types';
+import type { MessageData, UIMessage} from './types';
 
 // This plugin will open a window to prompt the user to enter a number, and
 // it will then create that many rectangles on the screen.
@@ -86,13 +87,14 @@ figma.ui.onmessage = async (msg: MessageData) => {
       })();`;
       
       // Create context with utility functions and figma globals
-      const context: ExecutionContext = {
-        ...utilityFunctions,
+      const context: any = {
+        parseTSV: utilityFunctions.parseTSV,
         figma,
         console,
         Promise,
         setTimeout,
-        clearTimeout
+        clearTimeout,
+        resize,
       };
       
       // Create parameter names and values from context

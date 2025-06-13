@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Figma-specific utility functions
 
 export interface FontInfo {
@@ -57,7 +58,26 @@ export function cloneNodeSafely(node: any): any {
   return clone;
 }
 
-export function resizeNodeSafely(node: any, width: number, height: number): void {
+/**
+ * Resizes a Figma node to the specified width and height while ensuring minimum size constraints
+ * and handling constraint-based positioning adjustments.
+ *
+ * @param node - The Figma node to resize. This can be any object that supports resizing and has constraints.
+ * @param width - The desired width for the node. If the width is less than the minimum size, it will be adjusted to the minimum size.
+ * @param height - The desired height for the node. If the height is less than the minimum size, it will be adjusted to the minimum size.
+ *
+ * @remarks
+ * - The function ensures that the width and height are at least `0.01` to avoid invalid sizes.
+ * - If the node has constraints (`horizontal` or `vertical` set to `"MAX"`), the position (`x` or `y`) of the node is adjusted
+ *   to maintain the constraints relative to the new size.
+ * - The `absoluteBoundingBox` property of the node is used to calculate the size difference for constraint adjustments.
+ *
+ * @example
+ * ```typescript
+ * resize(element, 150, 150);
+ * ```
+ */
+export function resize(node: any, width: number, height: number): void {
   // Ensure minimum size constraints
   const minSize = 0.01;
   const safeWidth = Math.max(width, minSize);
