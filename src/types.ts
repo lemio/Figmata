@@ -21,16 +21,3 @@ export interface TestMessage {
 }
 
 export type UIMessage = ErrorMessage | LogMessage | TestMessage;
-
-// Context for Function execution
-export interface ExecutionContext {
-  parseTSV: (tsvText: string) => Record<string, Record<string, string>>;
-  delay: (ms: number) => Promise<void>;
-  clamp: (value: number, min: number, max: number) => number;
-  formatNumber: (num: number, decimals?: number) => string;
-  figma: PluginAPI;
-  console: Console;
-  Promise: PromiseConstructor;
-  setTimeout: typeof setTimeout;
-  clearTimeout: typeof clearTimeout;
-}
