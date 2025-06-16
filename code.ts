@@ -23,7 +23,157 @@ function test() {
                 console.log("test");
 }
 
-      const prependCode = `
+// State variables for toolbar functionality
+let lockedFrame: any = null;
+let autoRefreshEnabled = false;
+
+function debounce(callback: () => void, timeout: number) {
+  return function(this: any, ...args: []) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      callback.apply(this, args);
+    }, timeout);
+  };
+}
+
+// Helper functions for toolbar
+function getFramesWithFigmataData() {
+  const frames: Array<{id: string, name: string}> = [];
+  
+  function searchForFrames(node: any) {
+    if (node.type === 'FRAME' && node.getPluginData('code')) {
+      frames.push({
+        id: node.id,
+        name: `${node.name} (${node.id.substring(0, 8)}...)`
+      });
+    }
+    
+    if ('children' in node) {
+      for (const child of node.children) {
+        searchForFrames(child);
+      }
+    }
+  }
+  
+  // Search all pages
+  for (const page of figma.root.children) {
+    searchForFrames(page);
+  }
+  
+  return frames;
+}
+
+function getAllFrames() {
+  const frames: Array<{id: string, name: string}> = [];
+  
+  function searchForFrames(node: any) {
+    if (node.type === 'FRAME' && node.getPluginData('code')) {
+      frames.push({
+        id: node.id,
+        name: `${node.name} (${node.id.substring(0, 8)}...)`
+      });
+    }
+    
+    if ('children' in node) {
+      for (const child of node.children) {
+        searchForFrames(child);
+      }
+    }
+  }
+  
+  //Search only in the current page
+  const currentPage = figma.currentPage;
+  searchForFrames(currentPage);
+  console.log("All Frames", frames);
+  return frames;
+}
+
+function getCurrentSelectedFrame() {
+  const selection = figma.currentPage.selection[0];
+  if (selection && selection.type === 'FRAME') {
+    return {
+      id: selection.id,
+      name: `${selection.name} (${selection.id.substring(0, 8)}...)`
+    };
+  }
+  return null;
+}
+
+figma.ui.onmessage = async (msg: any) => {
+  try {
+    // Handle different message types
+    switch (msg.type) {
+      case 'run':
+        await handleRunCode(msg.code);
+        break;
+        
+      case 'frameSelected':
+        await handleFrameSelected(msg.frame);
+        break;
+        
+      case 'lockToggled':
+        await handleLockToggled(msg.locked, msg.frame);
+        break;
+        
+      case 'autoRefreshToggled':
+        handleAutoRefreshToggled(msg.enabled);
+        break;
+        
+      case 'promptSubmitted':
+        await handlePromptSubmitted(msg.prompt);
+        break;
+        
+      case 'requestFrameList':
+        console.log("Requesting frame list");
+        await handleRequestFrameList();
+        break;
+        
+      default:
+        // Handle legacy code execution (backward compatibility)
+        if (msg.code) {
+          await handleRunCode(msg.code);
+        }
+        break;
+    }
+  } catch (error) {
+    figma.ui.postMessage({
+      type: 'error',
+      error: String(error),
+      line: 0
+    });
+  }
+}
+
+async function handleRunCode(code: string) {
+  let targetFrame;
+  
+  if (lockedFrame) {
+    // Use the locked frame
+    targetFrame = lockedFrame;
+  } else {
+    // Use the current selection
+    const selection = figma.currentPage.selection[0];
+    if (!selection || selection.type !== 'FRAME') {
+      figma.ui.postMessage({
+        type: 'error',
+        error: 'Please select a frame or lock to a specific frame',
+        line: 0
+      });
+      return;
+    }
+    targetFrame = selection;
+  }
+  
+  targetFrame.setPluginData('code', code);
+  figma.ui.postMessage({
+    type: 'error',
+    error: '',
+  });
+  
+  const debouncedFunction = debounce(() => {
+    try {
+      // Create dynamic prependCode with the target frame
+      const dynamicPrependCode = `
       /*
     console.log = function(...args) {
       figma.ui.postMessage({
@@ -41,12 +191,6 @@ function test() {
 
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split('\\t');
-      /*
-    if (values.length !== headers.length) {
-      // Optionally skip malformed rows
-      continue;
-    }*/
-
     const row = {};
 
     for (let j = 1; j<= headers.length; j++) {
@@ -61,10 +205,9 @@ function test() {
     function delay(ms){
       return new Promise(resolve => setTimeout(resolve, ms));
     }
-      async () =>  {
-    let FigmaFrame = figma.currentPage.selection[0]
+      (async () =>  {
+    let FigmaFrame = await figma.getNodeByIdAsync('${targetFrame.id}')
     let FirstChild = FigmaFrame.children[0];
-    //await Promise.all([figma.loadFontAsync({family: "Roboto", style: "Regular"}),figma.loadFontAsync({ family: "Inter", style: "Regular" })]);
     let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
           const [family, style] = font.split('***');
           console.log(family, style);
@@ -83,51 +226,285 @@ function test() {
     originalChildren.slice(1).forEach(child => {
         child.remove();
       });
-      `
-function debounce(callback: () => void, timeout: number) {
-  return function(this: any, ...args: []) {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      callback.apply(this, args);
-    }, timeout);
-  };
-}
-figma.ui.onmessage =  async (msg: {code: string}) => {
-  const selection: any = figma.currentPage.selection[0]
-  selection.setPluginData('code',msg.code)
-  figma.ui.postMessage({
-    type: 'error',
-    error: '',
-  });
-  //selection.setRelaunchData({'edit': 'test'})
-  const debouncedFunction =  debounce(() =>{
-    try {
-
+      `;
+      
       const postCode = `
       originalChildren.slice(0,1).forEach(child => {
         console.log(child)
         child.remove();
       });
-      }()`
-      eval(prependCode + msg.code + postCode).catch((error:any) => {
+      
+          })()`
+      console.log(dynamicPrependCode + code + postCode)
+      eval(dynamicPrependCode + code + postCode).catch((error:any) => {
         figma.ui.postMessage({
           type: 'error',
           error: String(error),
-          line: error.lineNumber - prependCode.split('\n').length + 1, // Adjust line number based on prependCode
+          line: error.lineNumber - dynamicPrependCode.split('\n').length + 1,
         });
       });
-      }catch(error:any){
-        figma.ui.postMessage({
-          type: 'error',
-          error: String(error),
-          line: error.lineNumber - prependCode.split('\n').length + 1,
-        });
-        console.log("SYNTAX ERROR", error)
-      }
-      
-  },100)
-  debouncedFunction()
+    } catch (error: any) {
+      figma.ui.postMessage({
+        type: 'error',
+        error: String(error),
+        line: error.lineNumber || 0,
+      });
+      console.log("SYNTAX ERROR", error);
+    }
+  }, 100);
+  
+  debouncedFunction();
 }
+
+async function handleFrameSelected(frameId: string) {
+  if (!frameId) return;
+  
+  // Find the frame by ID
+  const frame = await figma.getNodeByIdAsync(frameId);
+  if (frame && frame.type === 'FRAME') {
+    // Focus on the selected frame
+    figma.viewport.scrollAndZoomIntoView([frame]);
+    figma.currentPage.selection = [frame as any];
+    
+    // Load existing code if available
+    const existingCode = frame.getPluginData('code');
+    if (existingCode) {
+      figma.ui.postMessage({
+        type: 'updateCode',
+        code: existingCode
+      });
+    }
+  }
+}
+
+async function handleLockToggled(locked: boolean, frameId: string) {
+  if (locked && frameId) {
+    const frame = await figma.getNodeByIdAsync(frameId);
+    if (frame && frame.type === 'FRAME') {
+      lockedFrame = frame;
+    }
+  } else {
+    lockedFrame = null;
+  }
+}
+
+function handleAutoRefreshToggled(enabled: boolean) {
+  autoRefreshEnabled = enabled;
+}
+
+// Helper function to get frame structure information
+function getFrameStructure(frame: any): string {
+  const frameInfo = {
+    name: frame.name,
+    type: frame.type,
+    width: frame.width,
+    height: frame.height,
+    children: []
+  };
+
+  if (frame.children && frame.children.length > 0) {
+    frameInfo.children = frame.children.map((child: any) => {
+      const childInfo: any = {
+        name: child.name,
+        type: child.type,
+        width: child.width,
+        height: child.height
+      };
+
+      if (child.type === 'TEXT') {
+        childInfo.characters = child.characters;
+        childInfo.fontName = child.fontName;
+        childInfo.fontSize = child.fontSize;
+      }
+
+      if (child.type === 'INSTANCE' && child.componentProperties) {
+        childInfo.componentProperties = Object.keys(child.componentProperties);
+      }
+
+      if (child.children && child.children.length > 0) {
+        childInfo.children = child.children.map((grandChild: any) => ({
+          name: grandChild.name,
+          type: grandChild.type,
+          characters: grandChild.type === 'TEXT' ? grandChild.characters : undefined
+        }));
+      }
+
+      return childInfo;
+    });
+  }
+
+  return JSON.stringify(frameInfo, null, 2);
+}
+
+// Function to call the local Deepseek API
+async function callDeepseekAPI(prompt: string, currentCode: string, frameStructure: string): Promise<string> {
+  const systemPrompt = `You are a Figma plugin code generator. You generate JavaScript code that manipulates Figma frames and their children.
+
+Available variables and functions:
+- FigmaFrame: The current frame being worked on
+- FirstChild: The first child of the frame (usually the template)
+- originalChildren: Array of current children in the frame
+- parseTSV(tsvText): Function to parse tab-separated values
+- delay(ms): Function to create delays
+
+Common patterns:
+- Clone the first child: FirstChild.clone()
+- Resize elements: element.resize(width, height)
+- Set text content: element.findChild(x => x.name === 'TextLayerName').characters = "new text"
+- Set component properties: element.setProperties({"PropertyName": "value"})
+- Add to frame: FigmaFrame.appendChild(element)
+
+Current frame structure:
+${frameStructure}
+
+Current code:
+${currentCode}
+
+Generate only executable JavaScript code that follows these patterns. Do not include explanations or markdown formatting.`;
+
+  const requestBody = {
+    model: "deepseek-r1-distill-qwen-32b",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: prompt }
+    ],
+    temperature: 0.7,
+    max_tokens: -1,
+    stream: false
+  };
+
+  return new Promise((resolve, reject) => {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', 'http://localhost:1234/v1/chat/completions', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              if (data.choices && data.choices[0] && data.choices[0].message) {
+                resolve(data.choices[0].message.content.trim());
+              } else {
+                reject(new Error('Invalid response format from API'));
+              }
+            } catch (parseError) {
+              reject(new Error('Failed to parse API response'));
+            }
+          } else {
+            reject(new Error(`API request failed: ${xhr.status} ${xhr.statusText}`));
+          }
+        }
+      };
+      
+      xhr.onerror = function() {
+        reject(new Error('Network error occurred'));
+      };
+      
+      xhr.send(JSON.stringify(requestBody));
+    } catch (error) {
+      console.error('Deepseek API Error:', error);
+      reject(error);
+    }
+  });
+}
+
+async function handlePromptSubmitted(prompt: string) {
+  try {
+    // Get the target frame (locked frame or current selection)
+    const targetFrame = lockedFrame || figma.currentPage.selection[0];
+    
+    if (!targetFrame || targetFrame.type !== 'FRAME') {
+      figma.ui.postMessage({
+        type: 'error',
+        error: 'Please select a frame or lock to a specific frame before using prompts',
+        line: 0
+      });
+      return;
+    }
+
+    // Show loading state
+    figma.ui.postMessage({
+      type: 'log',
+      message: 'Generating code with AI...',
+      line: 0
+    });
+
+    // Get current code and frame structure
+    const currentCode = targetFrame.getPluginData('code') || '';
+    const frameStructure = getFrameStructure(targetFrame);
+
+    // Call Deepseek API
+    const generatedCode = await callDeepseekAPI(prompt, currentCode, frameStructure);
+
+    // Update the UI with the generated code
+    figma.ui.postMessage({
+      type: 'updateCode',
+      code: generatedCode
+    });
+
+    // Save the generated code to the frame
+    targetFrame.setPluginData('code', generatedCode);
+
+    // Show success message
+    figma.ui.postMessage({
+      type: 'log',
+      message: 'Code generated successfully!',
+      line: 0
+    });
+
+    // Notify user
+    figma.notify('Code generated with AI!');
+
+  } catch (error) {
+    console.error('Error in handlePromptSubmitted:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    figma.ui.postMessage({
+      type: 'error',
+      error: `AI Generation failed: ${errorMessage}`,
+      line: 0
+    });
+    figma.notify('AI generation failed. Check if Deepseek is running on localhost:1234');
+  }
+}
+
+async function handleRequestFrameList() {
+  const allFrames = getAllFrames();
+  const currentFrame = getCurrentSelectedFrame();
+  console.log("Current Frame", currentFrame);
+  console.log("All Frames", allFrames);
+  // Mark frames that have data
+  const enrichedFrames = allFrames.map(frame => ({
+    ...frame,
+    hasData: true//framesWithData.some(dataFrame => dataFrame.id === frame.id)
+  }));
+  
+  figma.ui.postMessage({
+    type: 'updateFrameList',
+    frames: enrichedFrames
+  });
+  
+  if (currentFrame && !lockedFrame) {
+    figma.ui.postMessage({
+      type: 'setCurrentFrame',
+      frame: currentFrame
+    });
+  }
+}
+
+// Listen for selection changes to update frame dropdown
+figma.on('selectionchange', () => {
+  if (!lockedFrame) {
+    const currentFrame = getCurrentSelectedFrame();
+    if (currentFrame) {
+      figma.ui.postMessage({
+        type: 'setCurrentFrame',
+        frame: currentFrame
+      });
+    }
+  }
+});
 /*
 figma.ui.onmessage =  async (msg: {type: string, count: number}) => {
   

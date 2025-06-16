@@ -12,8 +12,10 @@
   "ui": "ui.html",
   "networkAccess": {
     "allowedDomains": [
-      "https://cdnjs.cloudflare.com"
-    ]
+      "https://cdnjs.cloudflare.com",
+      "http://localhost:1234"
+    ],
+    "reasoning": "This plugin can make use of LLM Studio on the localhost 1234"
   },
   "relaunchButtons": [
   {"command": "edit", "name": "Edit figmata"},

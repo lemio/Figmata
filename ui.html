@@ -1,8 +1,160 @@
 <html>
-
+<head>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1e1e1e;
+      color: #cccccc;
+    }
+    
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #2d2d30;
+      border-bottom: 1px solid #3e3e42;
+      height: 40px;
+      box-sizing: border-box;
+    }
+    
+    .toolbar-button {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .toolbar-button:hover {
+      background: #1177bb;
+    }
+    
+    .toolbar-button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    
+    .toolbar-button.lock-active {
+      background: #f59e0b;
+    }
+    
+    .toolbar-button.lock-active:hover {
+      background: #d97706;
+    }
+    
+    .frame-dropdown {
+      background: #3c3c3c;
+      color: #cccccc;
+      border: 1px solid #555;
+      padding: 4px 8px;
+      border-radius: 4px;
+      min-width: 200px;
+      font-size: 12px;
+    }
+    
+    .frame-dropdown:focus {
+      outline: none;
+      border-color: #0e639c;
+    }
+    
+    .frame-dropdown option {
+      padding: 2px;
+    }
+    
+    .auto-refresh-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+    }
+    
+    .auto-refresh-checkbox {
+      accent-color: #0e639c;
+    }
+    
+    .prompt-input {
+      flex: 1;
+      background: #3c3c3c;
+      color: #cccccc;
+      border: 1px solid #555;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 12px;
+      transition: opacity 0.3s ease;
+    }
+    
+    .prompt-input:focus {
+      outline: none;
+      border-color: #0e639c;
+    }
+    
+    .prompt-input::placeholder {
+      color: #888;
+    }
+    
+    .prompt-input:disabled {
+      cursor: not-allowed;
+      background: #2a2a2a;
+    }
+    
+    .play-icon {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+    
+    .lock-icon {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+    
+    .editor-container {
+      height: calc(100vh - 40px);
+    }
+  </style>
+</head>
 
 <body>
-  <div id="monaco-editor" style="height:1000px"></div>
+  <div class="toolbar">
+    <button class="toolbar-button" id="runButton">
+      <svg class="play-icon" viewBox="0 0 16 16">
+        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+        <path d="M6.271 5.055a.5.5 0 0 1 .52.038L11 7.055a.5.5 0 0 1 0 .89L6.791 9.907a.5.5 0 0 1-.791-.389V5.5a.5.5 0 0 1 .271-.445z"/>
+      </svg>
+      Run
+    </button>
+    
+    <select class="frame-dropdown" id="frameDropdown">
+      <option value="">Select Frame...</option>
+    </select>
+    
+    <button class="toolbar-button" id="lockButton">
+      <svg class="lock-icon" viewBox="0 0 16 16">
+        <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+      </svg>
+      <span id="lockText">Lock</span>
+    </button>
+    
+    <div class="auto-refresh-container">
+      <input type="checkbox" class="auto-refresh-checkbox" id="autoRefreshCheckbox">
+      <label for="autoRefreshCheckbox">Auto-refresh</label>
+    </div>
+    
+    <input type="text" class="prompt-input" id="promptInput" placeholder="Enter prompt for changes...">
+  </div>
+  
+  <div id="monaco-editor" class="editor-container"></div>
 </body>
 </html>
 
@@ -10,6 +162,196 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/loader.js"></script>
     <script>
       logs = []
+      let isLocked = false;
+      let currentFrame = null;
+      let autoRefreshEnabled = false;
+      
+      // Toolbar functionality
+      function initializeToolbar() {
+        const runButton = document.getElementById('runButton');
+        const frameDropdown = document.getElementById('frameDropdown');
+        const lockButton = document.getElementById('lockButton');
+        const lockText = document.getElementById('lockText');
+        const autoRefreshCheckbox = document.getElementById('autoRefreshCheckbox');
+        const promptInput = document.getElementById('promptInput');
+
+        // Run button functionality
+        runButton.addEventListener('click', () => {
+          parent.postMessage({ pluginMessage: { type: 'run', code: editor.getValue() }}, '*');
+        });
+
+        // Frame dropdown functionality
+        frameDropdown.addEventListener('change', (e) => {
+          currentFrame = e.target.value;
+          parent.postMessage({ pluginMessage: { type: 'frameSelected', frame: currentFrame }}, '*');
+        });
+
+        // Lock button functionality
+        lockButton.addEventListener('click', () => {
+          isLocked = !isLocked;
+          lockButton.classList.toggle('lock-active', isLocked);
+          
+          if (isLocked) {
+            lockText.textContent = 'Unlock';
+            lockButton.innerHTML = `
+              <svg class="lock-icon" viewBox="0 0 16 16">
+                <path d="M11 1a2 2 0 0 0-2 2v4a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h5V3a3 3 0 1 1 6 0v4a.5.5 0 0 1-1 0V3a2 2 0 0 0-2-2z"/>
+              </svg>
+              <span id="lockText">Unlock</span>
+            `;
+          } else {
+            lockText.textContent = 'Lock';
+            lockButton.innerHTML = `
+              <svg class="lock-icon" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+              </svg>
+              <span id="lockText">Lock</span>
+            `;
+          }
+          
+          parent.postMessage({ pluginMessage: { type: 'lockToggled', locked: isLocked, frame: currentFrame }}, '*');
+        });
+
+        // Auto-refresh checkbox functionality
+        autoRefreshCheckbox.addEventListener('change', (e) => {
+          autoRefreshEnabled = e.target.checked;
+          parent.postMessage({ pluginMessage: { type: 'autoRefreshToggled', enabled: autoRefreshEnabled }}, '*');
+        });
+
+        // Prompt input functionality
+        promptInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && e.target.value.trim()) {
+            const prompt = e.target.value.trim();
+            
+            // Show loading state
+            promptInput.disabled = true;
+            promptInput.placeholder = 'Generating code with AI...';
+            promptInput.style.opacity = '0.6';
+            
+            parent.postMessage({ pluginMessage: { type: 'promptSubmitted', prompt: prompt }}, '*');
+            e.target.value = '';
+          }
+        });
+        
+        // Function to reset prompt input state
+        function resetPromptInput() {
+          const promptInput = document.getElementById('promptInput');
+          promptInput.disabled = false;
+          promptInput.placeholder = 'Enter prompt for changes...';
+          promptInput.style.opacity = '1';
+        }
+
+        // Function to call the local Deepseek API
+        async function callDeepseekAPI(prompt, currentCode, frameStructure, frameId) {
+          const systemPrompt = `You are a Figma plugin code generator. You generate JavaScript code that manipulates Figma frames and their children.
+
+Available variables and functions:
+- FigmaFrame: The current frame being worked on
+- FirstChild: The first child of the frame (usually the template)
+- originalChildren: Array of current children in the frame
+- parseTSV(tsvText): Function to parse tab-separated values
+- delay(ms): Function to create delays
+
+Common patterns:
+- Clone the first child: FirstChild.clone()
+- Resize elements: element.resize(width, height)
+- Set text content: element.findChild(x => x.name === 'TextLayerName').characters = "new text"
+- Set component properties: element.setProperties({"PropertyName": "value"})
+- Add to frame: FigmaFrame.appendChild(element)
+
+Current frame structure:
+${frameStructure}
+
+Current code:
+${currentCode}
+
+Generate only executable JavaScript code that follows these patterns. Do not include explanations or markdown formatting.`;
+
+          const requestBody = {
+            model: "deepseek-r1-distill-qwen-32b",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: prompt }
+            ],
+            temperature: 0.7,
+            max_tokens: -1,
+            stream: false
+          };
+
+          try {
+            const response = await fetch('http://localhost:1234/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+              throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.choices && data.choices[0] && data.choices[0].message) {
+              const generatedCode = data.choices[0].message.content.trim();
+              
+              // Send the result back to the plugin
+              parent.postMessage({ 
+                pluginMessage: { 
+                  type: 'apiResponse', 
+                  generatedCode: generatedCode,
+                  frameId: frameId 
+                }
+              }, '*');
+              
+            } else {
+              throw new Error('Invalid response format from API');
+            }
+          } catch (error) {
+            console.error('Deepseek API Error:', error);
+            parent.postMessage({ 
+              pluginMessage: { 
+                type: 'error', 
+                error: `AI Generation failed: ${error.message}`,
+                line: 0 
+              }
+            }, '*');
+            resetPromptInput();
+          }
+        }
+        console.log("Requesting initial frame list...");
+        // Request initial frame list
+        parent.postMessage({ pluginMessage: { type: 'requestFrameList' }}, '*');
+      }
+
+      // Update frame dropdown with available frames
+      function updateFrameDropdown(frames) {
+        const dropdown = document.getElementById('frameDropdown');
+        dropdown.innerHTML = '<option value="">Select Frame...</option>';
+        
+        frames.forEach(frame => {
+          const option = document.createElement('option');
+          option.value = frame.id;
+          // Add indicator for frames with data
+          const hasDataIndicator = frame.hasData ? ' ●' : '';
+          option.textContent = frame.name + hasDataIndicator;
+          if (frame.id === currentFrame) {
+            option.selected = true;
+          }
+          dropdown.appendChild(option);
+        });
+      }
+
+      // Set current frame (from selection change)
+      function setCurrentFrame(frame) {
+        if (!isLocked) {
+          currentFrame = frame.id;
+          const dropdown = document.getElementById('frameDropdown');
+          dropdown.value = currentFrame;
+        }
+      }
+        
         require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs' }});
         var figmaTypes = `
 /* plugin-typings are auto-generated. Do not update them directly. See plugin-docs/ for instructions. */
@@ -2833,15 +3175,19 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
                 editor.setValue(localStorage.savedtext);
             }*/
             editor.getModel().onDidChangeContent(function() {
-              //window.postMessage(editor.getValue())
-              parent.postMessage({ pluginMessage: { code: editor.getValue()} }, '*')
-                //eval(editor.getValue());
-                //localStorage.savedtext = editor.getValue();
+              // Auto-run if auto-refresh is enabled
+              if (autoRefreshEnabled) {
+                parent.postMessage({ pluginMessage: { code: editor.getValue()}}, '*')
+              }
             });
+            
+            // Initialize toolbar after editor is ready
+            initializeToolbar();
         });
         window.onmessage = (event) => {
           console.log(event.data.pluginMessage)
-          if (event.data.pluginMessage?.type  === 'error'){
+          
+          if (event.data.pluginMessage?.type === 'error'){
             console.log("received error")
             monaco.editor.setModelMarkers(editor.getModel(), 'owner', 
             [{
@@ -2851,16 +3197,9 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
 				startColumn: 1,
 				endLineNumber: event.data.pluginMessage.line,
 				endColumn: 100,
-			}]
-            /*[{
-              startLineNumber: event.data.pluginMessage.line || 1,
-              startColumn: event.data.pluginMessage.column || 1,
-              endLineNumber: event.data.pluginMessage.line || 2,
-              endColumn: event.data.pluginMessage.column || 100,
-              message: event.data.pluginMessage.message,
-              severity: monaco.MarkerSeverity.Error
-            }]);*/)
+			}])
           }
+          
           if (event.data.pluginMessage?.type === 'success'){
             console.log("received success")
             //monaco.editor.setModelMarkers(editor.getModel(), 'owner', [])
@@ -2879,8 +3218,34 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
               }
             }))
           }
+          
           if (event.data.pluginMessage?.test !== undefined){
             editor.setValue(event.data.pluginMessage.test)
+          }
+          
+          // Handle toolbar-related messages
+          if (event.data.pluginMessage?.type === 'updateFrameList') {
+            updateFrameDropdown(event.data.pluginMessage.frames);
+          }
+          
+          if (event.data.pluginMessage?.type === 'setCurrentFrame') {
+            setCurrentFrame(event.data.pluginMessage.frame);
+          }
+          
+          if (event.data.pluginMessage?.type === 'updateCode') {
+            editor.setValue(event.data.pluginMessage.code);
+            resetPromptInput(); // Reset prompt input after code update
+          }
+          
+          // Reset prompt input on error or success
+          if (event.data.pluginMessage?.type === 'error' || event.data.pluginMessage?.type === 'success') {
+            resetPromptInput();
+          }
+          
+          // Handle API call request from plugin
+          if (event.data.pluginMessage?.type === 'makeAPICall') {
+            const { prompt, currentCode, frameStructure, frameId } = event.data.pluginMessage;
+            callDeepseekAPI(prompt, currentCode, frameStructure, frameId);
           }
         }
 
