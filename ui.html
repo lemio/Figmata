@@ -378,85 +378,6 @@
           promptInput.style.opacity = '1';
         }
 
-        // Function to call the local Deepseek API
-        async function callDeepseekAPI(prompt, currentCode, frameStructure, frameId) {
-          const systemPrompt = `You are a Figma plugin code generator. You generate JavaScript code that manipulates Figma frames and their children.
-
-Available variables and functions:
-- FigmaFrame: The current frame being worked on
-- FirstChild: The first child of the frame (usually the template)
-- originalChildren: Array of current children in the frame
-- parseTSV(tsvText): Function to parse tab-separated values
-- delay(ms): Function to create delays
-
-Common patterns:
-- Clone the first child: FirstChild.clone()
-- Resize elements: element.resize(width, height)
-- Set text content: element.findChild(x => x.name === 'TextLayerName').characters = "new text"
-- Set component properties: element.setProperties({"PropertyName": "value"})
-- Add to frame: FigmaFrame.appendChild(element)
-
-Current frame structure:
-${frameStructure}
-
-Current code:
-${currentCode}
-
-Generate only executable JavaScript code that follows these patterns. Do not include explanations or markdown formatting.`;
-
-          const requestBody = {
-            model: "deepseek-r1-distill-qwen-32b",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: prompt }
-            ],
-            temperature: 0.7,
-            max_tokens: -1,
-            stream: false
-          };
-
-          try {
-            const response = await fetch('http://localhost:1234/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(requestBody)
-            });
-
-            if (!response.ok) {
-              throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            
-            if (data.choices && data.choices[0] && data.choices[0].message) {
-              const generatedCode = data.choices[0].message.content.trim();
-              
-              // Send the result back to the plugin
-              parent.postMessage({ 
-                pluginMessage: { 
-                  type: 'apiResponse', 
-                  generatedCode: generatedCode,
-                  frameId: frameId 
-                }
-              }, '*');
-              
-            } else {
-              throw new Error('Invalid response format from API');
-            }
-          } catch (error) {
-            console.error('Deepseek API Error:', error);
-            parent.postMessage({ 
-              pluginMessage: { 
-                type: 'error', 
-                error: `AI Generation failed: ${error.message}`,
-                line: 0 
-              }
-            }, '*');
-            resetPromptInput();
-          }
-        }
         console.log("Requesting initial frame list...");
         // Request initial frame list
         parent.postMessage({ pluginMessage: { type: 'requestFrameList' }}, '*');
@@ -3400,12 +3321,6 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           // Reset prompt input on error or success
           if (event.data.pluginMessage?.type === 'error' || event.data.pluginMessage?.type === 'success') {
             resetPromptInput();
-          }
-          
-          // Handle API call request from plugin
-          if (event.data.pluginMessage?.type === 'makeAPICall') {
-            const { prompt, currentCode, frameStructure, frameId } = event.data.pluginMessage;
-            callDeepseekAPI(prompt, currentCode, frameStructure, frameId);
           }
         }
 
