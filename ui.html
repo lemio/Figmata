@@ -14,60 +14,118 @@
       align-items: center;
       gap: 8px;
       padding: 8px 12px;
-      background: #2d2d30;
-      border-bottom: 1px solid #3e3e42;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e5e5;
       height: 40px;
       box-sizing: border-box;
     }
     
     .toolbar-button {
-      background: #0e639c;
-      color: white;
-      border: none;
+      background: #f8f9fa;
+      color: #1a1a1a;
+      border: 1px solid #e5e5e5;
       padding: 6px 12px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
       font-size: 12px;
       font-weight: 500;
+      min-width: 36px;
+      height: 28px;
     }
     
     .toolbar-button:hover {
-      background: #1177bb;
+      background: #e9ecef;
+      border-color: #d0d7de;
     }
     
     .toolbar-button:disabled {
-      background: #555;
+      background: #f6f8fa;
+      color: #656d76;
+      border-color: #e5e5e5;
       cursor: not-allowed;
     }
     
     .toolbar-button.lock-active {
-      background: #f59e0b;
+      background: #fff8e1;
+      color: #e65100;
+      border-color: #ffcc02;
     }
     
     .toolbar-button.lock-active:hover {
-      background: #d97706;
+      background: #fff3c4;
+      border-color: #ffb300;
+    }
+    
+    .toolbar-button.success {
+      background: #e8f5e8 !important;
+      color: #2e7d32 !important;
+      border-color: #4caf50 !important;
+      animation: none;
+    }
+    
+    .toolbar-button.running {
+      background: #e3f2fd !important;
+      color: #1976d2 !important;
+      border-color: #2196f3 !important;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    .toolbar-button.changed {
+      background: #fff3e0;
+      color: #e65100;
+      border-color: #ff9800;
+    }
+    
+    .toolbar-button.error {
+      background: #ffebee;
+      color: #c62828;
+      border-color: #f44336;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2.5px solid #e3f2fd;
+      border-radius: 50%;
+      border-top-color: #1976d2;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
     
     .frame-dropdown {
-      background: #3c3c3c;
-      color: #cccccc;
-      border: 1px solid #555;
+      background: #ffffff;
+      color: #1a1a1a;
+      border: 1px solid #e5e5e5;
       padding: 4px 8px;
-      border-radius: 4px;
+      border-radius: 6px;
       min-width: 200px;
       font-size: 12px;
     }
     
     .frame-dropdown:focus {
       outline: none;
-      border-color: #0e639c;
+      border-color: #2196f3;
+      box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
     }
     
     .frame-dropdown option {
       padding: 2px;
+      background: #ffffff;
+      color: #1a1a1a;
     }
     
     .auto-refresh-container {
@@ -75,19 +133,20 @@
       align-items: center;
       gap: 4px;
       font-size: 12px;
+      color: #1a1a1a;
     }
     
     .auto-refresh-checkbox {
-      accent-color: #0e639c;
+      accent-color: #2196f3;
     }
     
     .prompt-input {
       flex: 1;
-      background: #3c3c3c;
-      color: #cccccc;
-      border: 1px solid #555;
+      background: #ffffff;
+      color: #1a1a1a;
+      border: 1px solid #e5e5e5;
       padding: 4px 8px;
-      border-radius: 4px;
+      border-radius: 6px;
       font-family: inherit;
       font-size: 12px;
       transition: opacity 0.3s ease;
@@ -95,27 +154,29 @@
     
     .prompt-input:focus {
       outline: none;
-      border-color: #0e639c;
+      border-color: #2196f3;
+      box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
     }
     
     .prompt-input::placeholder {
-      color: #888;
+      color: #656d76;
     }
     
     .prompt-input:disabled {
       cursor: not-allowed;
-      background: #2a2a2a;
+      background: #f6f8fa;
+      color: #656d76;
     }
     
     .play-icon {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       fill: currentColor;
     }
     
     .lock-icon {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
       fill: currentColor;
     }
     
@@ -128,11 +189,11 @@
 <body>
   <div class="toolbar">
     <button class="toolbar-button" id="runButton">
-      <svg class="play-icon" viewBox="0 0 16 16">
-        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-        <path d="M6.271 5.055a.5.5 0 0 1 .52.038L11 7.055a.5.5 0 0 1 0 .89L6.791 9.907a.5.5 0 0 1-.791-.389V5.5a.5.5 0 0 1 .271-.445z"/>
-      </svg>
-      Run
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="play">
+<path id="Vector" d="M3.3335 2L12.6668 8L3.3335 14V2Z" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
     </button>
     
     <select class="frame-dropdown" id="frameDropdown">
@@ -165,6 +226,78 @@
       let isLocked = false;
       let currentFrame = null;
       let autoRefreshEnabled = false;
+      let programmaticChange = false;
+      
+      // Function to set run button state
+      function setRunButtonState(state) {
+        const runButton = document.getElementById('runButton');
+        
+        // Remove all state classes
+        runButton.classList.remove('running', 'success', 'changed', 'error');
+        
+        switch(state) {
+          case 'running':
+            runButton.classList.add('running');
+            runButton.disabled = true;
+            runButton.innerHTML = `<div class="spinner"></div>`;
+            break;
+          case 'success':
+            runButton.classList.add('success');
+            runButton.disabled = false;
+            runButton.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M14.0002 4L6.66683 11.3333L3.3335 8" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+            `;
+            // Reset to normal state after 3 seconds
+            //setTimeout(() => setRunButtonState('normal'), 3000);
+            break;
+          case 'changed':
+            runButton.classList.add('changed');
+            runButton.disabled = false;
+            runButton.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="play">
+<path id="Vector" d="M3.3335 2L12.6668 8L3.3335 14V2Z" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
+            `;
+            break;
+          case 'error':
+            runButton.classList.add('error');
+            runButton.disabled = false;
+            runButton.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_606_8443)">
+<path d="M8.52995 15.6529C12.2118 15.6529 15.1966 12.6681 15.1966 8.98625C15.1966 5.30435 12.2118 2.31958 8.52995 2.31958C4.84805 2.31958 1.86328 5.30435 1.86328 8.98625C1.86328 12.6681 4.84805 15.6529 8.52995 15.6529Z" stroke="#1A1A1A" stroke-width="1.33447" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.52979 6.31958V8.98625" stroke="#1A1A1A" stroke-width="1.33447" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.52979 11.6531H8.53604" stroke="#1A1A1A" stroke-width="1.33447" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_606_8443">
+<rect width="16" height="16" fill="white" transform="translate(0.529785 0.986328)"/>
+</clipPath>
+</defs>
+</svg>
+
+
+            `;
+            break;
+          case 'normal':
+          default:
+            runButton.disabled = false;
+            runButton.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="play">
+<path id="Vector" d="M3.3335 2L12.6668 8L3.3335 14V2Z" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>
+
+            `;
+            break;
+        }
+      }
       
       // Toolbar functionality
       function initializeToolbar() {
@@ -177,6 +310,8 @@
 
         // Run button functionality
         runButton.addEventListener('click', () => {
+          // Show loading state
+          setRunButtonState('running');
           parent.postMessage({ pluginMessage: { type: 'run', code: editor.getValue() }}, '*');
         });
 
@@ -194,18 +329,20 @@
           if (isLocked) {
             lockText.textContent = 'Unlock';
             lockButton.innerHTML = `
-              <svg class="lock-icon" viewBox="0 0 16 16">
-                <path d="M11 1a2 2 0 0 0-2 2v4a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h5V3a3 3 0 1 1 6 0v4a.5.5 0 0 1-1 0V3a2 2 0 0 0-2-2z"/>
-              </svg>
-              <span id="lockText">Unlock</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12.6667 7.33325H3.33333C2.59695 7.33325 2 7.93021 2 8.66659V13.3333C2 14.0696 2.59695 14.6666 3.33333 14.6666H12.6667C13.403 14.6666 14 14.0696 14 13.3333V8.66659C14 7.93021 13.403 7.33325 12.6667 7.33325Z" stroke="black" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4.66651 7.33319V4.66652C4.66567 3.83989 4.97203 3.04244 5.52609 2.42897C6.08015 1.8155 6.84239 1.42979 7.66484 1.34672C8.48729 1.26364 9.31127 1.48913 9.97682 1.9794C10.6424 2.46967 11.102 3.18976 11.2665 3.99986" stroke="black" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
             `;
           } else {
             lockText.textContent = 'Lock';
             lockButton.innerHTML = `
-              <svg class="lock-icon" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-              </svg>
-              <span id="lockText">Lock</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12.6667 7.33325H3.33333C2.59695 7.33325 2 7.93021 2 8.66659V13.3333C2 14.0696 2.59695 14.6666 3.33333 14.6666H12.6667C13.403 14.6666 14 14.0696 14 13.3333V8.66659C14 7.93021 13.403 7.33325 12.6667 7.33325Z" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4.6665 7.33325V4.66659C4.6665 3.78253 5.01769 2.93468 5.64281 2.30956C6.26794 1.68444 7.11578 1.33325 7.99984 1.33325C8.88389 1.33325 9.73174 1.68444 10.3569 2.30956C10.982 2.93468 11.3332 3.78253 11.3332 4.66659V7.33325" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
             `;
           }
           
@@ -3179,6 +3316,11 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
               if (autoRefreshEnabled) {
                 parent.postMessage({ pluginMessage: { code: editor.getValue()}}, '*')
               }
+              
+              // Set button to changed state when user modifies code (not programmatic changes)
+              if (!programmaticChange) {
+                setRunButtonState('changed');
+              }
             });
             
             // Initialize toolbar after editor is ready
@@ -3198,11 +3340,20 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
 				endLineNumber: event.data.pluginMessage.line,
 				endColumn: 100,
 			}])
+			
+			// Reset run button state on error
+            setRunButtonState('error');
           }
           
           if (event.data.pluginMessage?.type === 'success'){
             console.log("received success")
-            //monaco.editor.setModelMarkers(editor.getModel(), 'owner', [])
+            // Clear all error markers when code executes successfully
+            monaco.editor.setModelMarkers(editor.getModel(), 'owner', [])
+            
+            // Show success state on run button
+            setRunButtonState('success');
+            
+            console.log("Code executed successfully!")
           }
           
           if (event.data.pluginMessage?.type === 'log'){
@@ -3220,7 +3371,9 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           }
           
           if (event.data.pluginMessage?.test !== undefined){
-            editor.setValue(event.data.pluginMessage.test)
+            programmaticChange = true;
+            editor.setValue(event.data.pluginMessage.test);
+            programmaticChange = false;
           }
           
           // Handle toolbar-related messages
@@ -3233,8 +3386,15 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           }
           
           if (event.data.pluginMessage?.type === 'updateCode') {
+            programmaticChange = true;
             editor.setValue(event.data.pluginMessage.code);
+            programmaticChange = false;
             resetPromptInput(); // Reset prompt input after code update
+            setRunButtonState('normal'); // Reset run button state
+          }
+          
+          if (event.data.pluginMessage?.type === 'clearErrors') {
+            monaco.editor.setModelMarkers(editor.getModel(), 'owner', []);
           }
           
           // Reset prompt input on error or success

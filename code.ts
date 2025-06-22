@@ -36,6 +36,18 @@ function debounce(callback: () => void, timeout: number) {
   };
 }
 
+function getLineNumberFromStack(stack: string): number {
+  if (!stack) return 0;
+  const lines = stack.split('\n');
+  for (const line of lines) {
+    const match = line.match(/:(\d+):\d+/);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+  }
+  return 0;
+}
+
 // Helper functions for toolbar
 function getFramesWithFigmataData() {
   const frames: Array<{id: string, name: string}> = [];
@@ -166,8 +178,7 @@ async function handleRunCode(code: string) {
   
   targetFrame.setPluginData('code', code);
   figma.ui.postMessage({
-    type: 'error',
-    error: '',
+    type: 'clearErrors'
   });
   
   const debouncedFunction = debounce(() => {
@@ -236,13 +247,34 @@ async function handleRunCode(code: string) {
       
           })()`
       console.log(dynamicPrependCode + code + postCode)
-      eval(dynamicPrependCode + code + postCode).catch((error:any) => {
-        figma.ui.postMessage({
-          type: 'error',
-          error: String(error),
-          line: error.lineNumber - dynamicPrependCode.split('\n').length + 1,
+      
+      // Execute the code and handle success/error properly
+      const codeToExecute = dynamicPrependCode + code + postCode;
+      const codeResult = eval(codeToExecute);
+      
+      // Check if the result is a promise (async code)
+      if (codeResult && typeof codeResult.then === 'function') {
+        codeResult.then(() => {
+          // Send success message for async code
+          figma.ui.postMessage({
+            type: 'success',
+            message: 'Code executed successfully',
+          });
+        }).catch((error: any) => {
+          console.log(error)
+          figma.ui.postMessage({
+            type: 'error',
+            error: String(error),
+            line: getLineNumberFromStack(error.stack) - dynamicPrependCode.split('\n').length + 1,
+          });
         });
-      });
+      } else {
+        // Send success message for sync code
+        figma.ui.postMessage({
+          type: 'success',
+          message: 'Code executed successfully',
+        });
+      }
     } catch (error: any) {
       figma.ui.postMessage({
         type: 'error',
@@ -336,80 +368,6 @@ function getFrameStructure(frame: any): string {
   return JSON.stringify(frameInfo, null, 2);
 }
 
-// Function to call the local Deepseek API
-async function callDeepseekAPI(prompt: string, currentCode: string, frameStructure: string): Promise<string> {
-  const systemPrompt = `You are a Figma plugin code generator. You generate JavaScript code that manipulates Figma frames and their children.
-
-Available variables and functions:
-- FigmaFrame: The current frame being worked on
-- FirstChild: The first child of the frame (usually the template)
-- originalChildren: Array of current children in the frame
-- parseTSV(tsvText): Function to parse tab-separated values
-- delay(ms): Function to create delays
-
-Common patterns:
-- Clone the first child: FirstChild.clone()
-- Resize elements: element.resize(width, height)
-- Set text content: element.findChild(x => x.name === 'TextLayerName').characters = "new text"
-- Set component properties: element.setProperties({"PropertyName": "value"})
-- Add to frame: FigmaFrame.appendChild(element)
-
-Current frame structure:
-${frameStructure}
-
-Current code:
-${currentCode}
-
-Generate only executable JavaScript code that follows these patterns. Do not include explanations or markdown formatting.`;
-
-  const requestBody = {
-    model: "deepseek-r1-distill-qwen-32b",
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: prompt }
-    ],
-    temperature: 0.7,
-    max_tokens: -1,
-    stream: false
-  };
-
-  return new Promise((resolve, reject) => {
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', 'http://localhost:1234/v1/chat/completions', true);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              if (data.choices && data.choices[0] && data.choices[0].message) {
-                resolve(data.choices[0].message.content.trim());
-              } else {
-                reject(new Error('Invalid response format from API'));
-              }
-            } catch (parseError) {
-              reject(new Error('Failed to parse API response'));
-            }
-          } else {
-            reject(new Error(`API request failed: ${xhr.status} ${xhr.statusText}`));
-          }
-        }
-      };
-      
-      xhr.onerror = function() {
-        reject(new Error('Network error occurred'));
-      };
-      
-      xhr.send(JSON.stringify(requestBody));
-    } catch (error) {
-      console.error('Deepseek API Error:', error);
-      reject(error);
-    }
-  });
-}
-
 async function handlePromptSubmitted(prompt: string) {
   try {
     // Get the target frame (locked frame or current selection)
@@ -424,48 +382,27 @@ async function handlePromptSubmitted(prompt: string) {
       return;
     }
 
-    // Show loading state
-    figma.ui.postMessage({
-      type: 'log',
-      message: 'Generating code with AI...',
-      line: 0
-    });
-
     // Get current code and frame structure
     const currentCode = targetFrame.getPluginData('code') || '';
     const frameStructure = getFrameStructure(targetFrame);
 
-    // Call Deepseek API
-    const generatedCode = await callDeepseekAPI(prompt, currentCode, frameStructure);
-
-    // Update the UI with the generated code
+    // Send request to UI to make the API call
     figma.ui.postMessage({
-      type: 'updateCode',
-      code: generatedCode
+      type: 'makeAPICall',
+      prompt: prompt,
+      currentCode: currentCode,
+      frameStructure: frameStructure,
+      frameId: targetFrame.id
     });
-
-    // Save the generated code to the frame
-    targetFrame.setPluginData('code', generatedCode);
-
-    // Show success message
-    figma.ui.postMessage({
-      type: 'log',
-      message: 'Code generated successfully!',
-      line: 0
-    });
-
-    // Notify user
-    figma.notify('Code generated with AI!');
 
   } catch (error) {
     console.error('Error in handlePromptSubmitted:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     figma.ui.postMessage({
       type: 'error',
-      error: `AI Generation failed: ${errorMessage}`,
+      error: `Prompt handling failed: ${errorMessage}`,
       line: 0
     });
-    figma.notify('AI generation failed. Check if Deepseek is running on localhost:1234');
   }
 }
 
