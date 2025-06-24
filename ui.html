@@ -3334,10 +3334,12 @@ var editor
                                 hasError = true;
                                 combinedMessage += (index > 0 ? '\t| ' : '') + '❌ ' + log.message.replace(/^❌\s*/, '');
                             } else if (log.type === 'timing') {
-                                combinedMessage += (index > 0 ? '\t| ' : '') + log.message;
+                                combinedMessage += log.message + ' '.repeat(Math.max(1, 5 - log.message.length)) + 'ms';
                             } else {
                                 const cleanMessage = log.message.replace(/^✅\s*/, '');
-                                combinedMessage += (index > 0 ? '\t| ' : '') + cleanMessage;
+                                //combinedMessage += (index > 0 ? '\t| ' : '') + cleanMessage;
+                                combinedMessage += ' '.repeat(Math.max(1, 5 - cleanMessage.length)) + cleanMessage + '|';
+
                             }
                         });
                         
@@ -3368,23 +3370,36 @@ var editor
             });
             
             monaco.languages.typescript.javascriptDefaults.addExtraLib(
-              figmaTypes/*
-              `var FigmaFrame:SceneNode = figma.currentPage.selection[0]
-var FirstChild:SceneNode = FigmaFrame.children[0];
-var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`*/
+              figmaTypes
             );
             monaco.languages.typescript.javascriptDefaults.addExtraLib(
               `var FigmaFrame:SceneNode = figma.currentPage.selection[0]
 var FirstChild:InstanceNode = FigmaFrame.children[0];
-var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
+var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children
+  
+  /**
+ * Resizes a Figma node to the specified width and height while ensuring minimum size constraints
+ * and handling constraint-based positioning adjustments.
+ *
+ * @param node - The Figma node to resize. This can be any object that supports resizing and has constraints.
+ * @param width - The desired width for the node. If the width is less than the minimum size, it will be adjusted to the minimum size.
+ * @param height - The desired height for the node. If the height is less than the minimum size, it will be adjusted to the minimum size.
+ *
+ * @remarks
+ * - The function ensures that the width and height are at least \`0.01\` to avoid invalid sizes.
+ * - If the node has constraints (\`horizontal\` or \`vertical\` set to \`"MAX"\`), the position (\`x\` or \`y\`) of the node is adjusted
+ *   to maintain the constraints relative to the new size.
+ * - The \`absoluteBoundingBox\` property of the node is used to calculate the size difference for constraint adjustments.
+ *
+ * @example
+ * \`\`\`typescript
+ * resize(element, 150, 150);
+ * \`\`\`
+ */
+function _resize(node: SceneNode, width: number, height: number){
+}`
             )
-            /*
-            if (localStorage.savedtext == undefined){
-                localStorage.savedtext = editor.getValue();
-            }
-            else{
-                editor.setValue(localStorage.savedtext);
-            }*/
+            
             editor.getModel().onDidChangeContent(function(e) {
               // Auto-run if auto-refresh is enabled
               if (autoRefreshEnabled) {
