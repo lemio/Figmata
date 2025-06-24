@@ -233,6 +233,50 @@ async function handleRunCode(code: string) {
     line: 0,
     });
 };*/
+/**
+ * Resizes a Figma node to the specified width and height while ensuring minimum size constraints
+ * and handling constraint-based positioning adjustments.
+ *
+ * @param node - The Figma node to resize. This can be any object that supports resizing and has constraints.
+ * @param width - The desired width for the node. If the width is less than the minimum size, it will be adjusted to the minimum size.
+ * @param height - The desired height for the node. If the height is less than the minimum size, it will be adjusted to the minimum size.
+ *
+ * @remarks
+ * - The function ensures that the width and height are at least \`0.01\` to avoid invalid sizes.
+ * - If the node has constraints (\`horizontal\` or \`vertical\` set to \`"MAX"\`), the position (\`x\` or \`y\`) of the node is adjusted
+ *   to maintain the constraints relative to the new size.
+ * - The \`absoluteBoundingBox\` property of the node is used to calculate the size difference for constraint adjustments.
+ *
+ * @example
+ * \`\`\`typescript
+ * resize(element, 150, 150);
+ * \`\`\`
+ */
+function _resize(node, width, height) {
+  // Ensure minimum size constraints
+  const minSize = 0.01;
+  const safeWidth = Math.max(width, minSize);
+  const safeHeight = Math.max(height, minSize);
+  
+  // Handle constraint-based positioning
+  if (node.constraints) {
+    const oldBounds = node.absoluteBoundingBox;
+    
+    if (oldBounds) {
+      if (node.constraints.horizontal === "MAX") {
+        const widthDiff = safeWidth - oldBounds.width;
+        node.x = node.x - widthDiff;
+      }
+      
+      if (node.constraints.vertical === "MAX") {
+        const heightDiff = safeHeight - oldBounds.height;
+        node.y = node.y - heightDiff;
+      }
+    }
+  }
+  node.resize(safeWidth, safeHeight);
+}
+
     function print(...args) {
       figma.ui.postMessage({
         type: 'log',
@@ -744,7 +788,7 @@ let data = [
   ]
 data.forEach((row) => {
 \tlet element = FirstChild.clone(); //${firstElement.name}
-\telement.resize(${firstElement.absoluteBoundingBox.width},${firstElement.absoluteBoundingBox.height})
+\t_resize(element,${firstElement.absoluteBoundingBox.width},${firstElement.absoluteBoundingBox.height})
 ${propertiesString}${childrenString}
 FigmaFrame.appendChild(element)
 })
