@@ -140,6 +140,65 @@
       accent-color: #2196f3;
     }
     
+    /* Quokka-style inlay hints */
+    .monaco-editor .suggest-widget .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
+      color: #569cd6;
+    }
+    
+    .monaco-editor .inlay-hints-widget {
+      color: #6a9955 !important;
+      background: rgba(106, 153, 85, 0.08) !important;
+      border: 1px solid rgba(106, 153, 85, 0.2) !important;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+      font-style: normal;
+      font-weight: 500;
+      margin-left: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .monaco-editor .inlay-hint {
+      color: #6a9955 !important;
+      background: rgba(106, 153, 85, 0.08) !important;
+      border: 1px solid rgba(106, 153, 85, 0.2) !important;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+      font-style: normal;
+      font-weight: 500;
+      margin-left: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    /* Error-specific styling */
+    .monaco-editor .inlay-hint[title*="❌"] {
+      color: #f14c4c !important;
+      background: rgba(241, 76, 76, 0.08) !important;
+      border-color: rgba(241, 76, 76, 0.2) !important;
+    }
+    
+    /* Success-specific styling */
+    .monaco-editor .inlay-hint[title*="✅"] {
+      color: #4caf50 !important;
+      background: rgba(76, 175, 80, 0.08) !important;
+      border-color: rgba(76, 175, 80, 0.2) !important;
+    }
+    
+    /* Timing-specific styling */
+    .monaco-editor .inlay-hint[title*="⏱️"] {
+      color: #2196f3 !important;
+      background: rgba(33, 150, 243, 0.08) !important;
+      border-color: rgba(33, 150, 243, 0.2) !important;
+      font-weight: 600;
+    }
+    
     .prompt-input {
       flex: 1;
       background: #ffffff;
@@ -220,13 +279,29 @@
 </html>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/loader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.js"></script>
     <script>
+      function refreshInlayHints() {
+          if (editor && editor.getModel()) {
+            try {
+              // Method 1: Try to refresh inlay hints directly
+              const action = editor.getAction('editor.action.inlayHints.refresh');
+              if (action) {
+                action.run();
+              }
+            } catch (e) {
+              console.log('Direct inlay hints refresh failed, using fallback');
+            }
+            
+          }
+        }
       logs = []
       let isLocked = false;
       let currentFrame = null;
       let autoRefreshEnabled = false;
       let programmaticChange = false;
+      let inlayHintsProvider = null;
+      let executionStartTime = null;
       
       // Function to set run button state
       function setRunButtonState(state) {
@@ -310,8 +385,11 @@
 
         // Run button functionality
         runButton.addEventListener('click', () => {
-          // Show loading state
+          // Show loading state and track start time
           setRunButtonState('running');
+          executionStartTime = Date.now();
+          logs = []; // Clear previous logs
+          //refreshInlayHints();
           parent.postMessage({ pluginMessage: { type: 'run', code: editor.getValue() }}, '*');
         });
 
@@ -378,6 +456,9 @@
           promptInput.style.opacity = '1';
         }
 
+        // Function to refresh inlay hints (Quokka-style logs)
+        
+
         console.log("Requesting initial frame list...");
         // Request initial frame list
         parent.postMessage({ pluginMessage: { type: 'requestFrameList' }}, '*');
@@ -392,7 +473,7 @@
           const option = document.createElement('option');
           option.value = frame.id;
           // Add indicator for frames with data
-          const hasDataIndicator = frame.hasData ? ' ●' : '';
+          const hasDataIndicator = /* frame.hasData ? ' ●' :*/ '';
           option.textContent = frame.name + hasDataIndicator;
           if (frame.id === currentFrame) {
             option.selected = true;
@@ -410,7 +491,7 @@
         }
       }
         
-        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs' }});
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs' }});
         var figmaTypes = `
 /* plugin-typings are auto-generated. Do not update them directly. See plugin-docs/ for instructions. */
 declare type ArgFreeEventType =
@@ -3214,6 +3295,78 @@ var editor
                 
                 language: 'javascript'
             });
+            console.log("monaco",monaco)
+            // Register inlay hints provider for Quokka-style logging
+            inlayHintsProvider = monaco.languages.registerInlayHintsProvider('javascript', {
+                provideInlayHints: function(model, range, token) {
+                    const hints = [];
+                    
+                    // Group logs by line number to handle multiple logs on same line
+                    const logsByLine = {};
+                    logs.forEach(log => {
+                        if (log.line > 0 && log.line <= model.getLineCount()) {
+                            if (!logsByLine[log.line]) {
+                                logsByLine[log.line] = [];
+                            }
+                            logsByLine[log.line].push(log);
+                        }
+                    });
+                    
+                    // Create hints for each line with logs
+                    Object.keys(logsByLine).forEach(lineNumber => {
+                        const line = parseInt(lineNumber);
+                        const lineLogs = logsByLine[line];
+                        const lineContent = model.getLineContent(line);
+                        
+                        // Find the end of actual code (before comments)
+                        let codeEndColumn = lineContent.length;
+                        const commentIndex = lineContent.indexOf('//');
+                        if (commentIndex > 0) {
+                            codeEndColumn = commentIndex;
+                        }
+                        
+                        // Combine multiple logs on the same line
+                        let combinedMessage = '';
+                        let hasError = false;
+                        
+                        lineLogs.forEach((log, index) => {
+                            if (log.type === 'error') {
+                                hasError = true;
+                                combinedMessage += (index > 0 ? '\t| ' : '') + '❌ ' + log.message.replace(/^❌\s*/, '');
+                            } else if (log.type === 'timing') {
+                                combinedMessage += (index > 0 ? '\t| ' : '') + log.message;
+                            } else {
+                                const cleanMessage = log.message.replace(/^✅\s*/, '');
+                                combinedMessage += (index > 0 ? '\t| ' : '') + cleanMessage;
+                            }
+                        });
+                        
+                        // Create the hint
+                        hints.push({
+                            position: { 
+                                lineNumber: line, 
+                                column: Math.max(1, codeEndColumn + 1)
+                            },
+                            label: ' => ' + combinedMessage,
+                            kind: hasError ? monaco.languages.InlayHintKind.Other : monaco.languages.InlayHintKind.Parameter,
+                            textEdits: undefined,
+                            tooltip: combinedMessage,
+                            paddingLeft: true,
+                            paddingRight: false
+                        });
+                    });
+                    
+                    return { hints: hints };
+                }
+            });
+            
+            // Enable inlay hints
+            editor.updateOptions({
+                inlayHints: {
+                    enabled: 'on'
+                }
+            });
+            
             monaco.languages.typescript.javascriptDefaults.addExtraLib(
               figmaTypes/*
               `var FigmaFrame:SceneNode = figma.currentPage.selection[0]
@@ -3232,15 +3385,19 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
             else{
                 editor.setValue(localStorage.savedtext);
             }*/
-            editor.getModel().onDidChangeContent(function() {
+            editor.getModel().onDidChangeContent(function(e) {
               // Auto-run if auto-refresh is enabled
               if (autoRefreshEnabled) {
                 parent.postMessage({ pluginMessage: { code: editor.getValue()}}, '*')
-              }
+                //reset the timer for printing the logs
+                executionStartTime = Date.now();
+                }
               
               // Set button to changed state when user modifies code (not programmatic changes)
               if (!programmaticChange) {
                 setRunButtonState('changed');
+                
+                
               }
             });
             
@@ -3252,15 +3409,16 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           
           if (event.data.pluginMessage?.type === 'error'){
             console.log("received error")
-            monaco.editor.setModelMarkers(editor.getModel(), 'owner', 
-            [{
-				message: event.data.pluginMessage.error,
-				severity: monaco.MarkerSeverity.Warning,
-				startLineNumber: event.data.pluginMessage.line,
-				startColumn: 1,
-				endLineNumber: event.data.pluginMessage.line,
-				endColumn: 100,
-			}])
+            
+            // Clear existing logs and add error as a special log entry
+            logs = [{
+              message: `❌ ${event.data.pluginMessage.error}`,
+              line: event.data.pluginMessage.line,
+              type: 'error'
+            }];
+            
+            // Refresh inlay hints to show error
+            refreshInlayHints();
 			
 			// Reset run button state on error
             setRunButtonState('error');
@@ -3268,19 +3426,40 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           
           if (event.data.pluginMessage?.type === 'success'){
             console.log("received success")
-            // Clear all error markers when code executes successfully
-            monaco.editor.setModelMarkers(editor.getModel(), 'owner', [])
-            monaco.editor.setModelMarkers(editor.getModel(), 'owner', logs.map((log, index) => {
-              return {
-                message: log.message,
-                severity: monaco.MarkerSeverity.Info,
-                startLineNumber: log.line ,
-                startColumn: 1,
-                endLineNumber: log.line,
-                endColumn: 100
+            
+            // Calculate execution time
+            const executionTime = executionStartTime ? Date.now() - executionStartTime : 0;
+            
+            // Add a success indicator to logs if they exist
+            if (logs.length > 0) {
+              logs.forEach(log => {
+                if (log.type !== 'error') {
+                  log.message = '✅ ' + log.message.replace(/^✅\s*/, '');
+                }
+              });
+              
+              // Add execution time info to the last log or create a new one
+              if (executionTime > 0) {
+                logs.push({
+                  message: `⏱️ Executed in ${executionTime}ms`,
+                  line: 1, // Show at the top
+                  type: 'timing'
+                });
               }
-            }))
-            logs = []; // Clear logs after success
+            } else if (executionTime > 0) {
+              // If no logs, just show execution time
+              logs.push({
+                message: `⏱️ Code executed successfully in ${executionTime}ms`,
+                line: 1,
+                type: 'timing'
+              });
+            }
+            
+            // Refresh inlay hints to show success indicators
+            refreshInlayHints();
+            
+            
+            
             // Show success state on run button
             setRunButtonState('success');
             
@@ -3288,17 +3467,31 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           }
           
           if (event.data.pluginMessage?.type === 'log'){
-            logs.push(event.data.pluginMessage)
-            monaco.editor.setModelMarkers(editor.getModel(), 'owner', logs.map((log, index) => {
-              return {
-                message: log.message,
-                severity: monaco.MarkerSeverity.Info,
-                startLineNumber: log.line ,
-                startColumn: 1,
-                endLineNumber: log.line,
-                endColumn: 100
+            // Format the log message for better readability
+            let formattedMessage = event.data.pluginMessage.message;
+            
+            // Try to detect and format objects/arrays
+            try {
+              if (formattedMessage.includes('{') || formattedMessage.includes('[')) {
+                // Try to parse as JSON and reformat
+                const parsed = JSON.parse(formattedMessage);
+                if (typeof parsed === 'object') {
+                  formattedMessage = JSON.stringify(parsed, null, 0);
+                  
+                }
               }
-            }))
+            } catch (e) {
+              // Keep original message if not valid JSON
+            }
+            
+            logs.push({
+              message: formattedMessage,
+              line: event.data.pluginMessage.line,
+              type: 'log'
+            });
+            
+            // Refresh inlay hints to show new log
+            refreshInlayHints();
           }
           
           if (event.data.pluginMessage?.test !== undefined){
@@ -3326,8 +3519,8 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           
           if (event.data.pluginMessage?.type === 'clearErrors') {
             console.log("Clearing errors");
-            //logs = [];
-            //monaco.editor.setModelMarkers(editor.getModel(), 'owner', []);
+            logs = [];
+            refreshInlayHints();
           }
           
           // Reset prompt input on error or success
