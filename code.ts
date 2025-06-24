@@ -277,6 +277,14 @@ function _resize(node, width, height) {
   node.resize(safeWidth, safeHeight);
 }
 
+function _setText(node, name, text){
+  const textNode = node.findChild(x => x.name === name);
+  if (textNode && textNode.type === 'TEXT') {
+    textNode.characters = String(text);
+  } else {
+    console.error(\`Text node with name "\${name}" not found or is not a TEXT node.\`);
+  }
+}
     function print(...args) {
       figma.ui.postMessage({
         type: 'log',
@@ -767,7 +775,7 @@ figma.ui.onmessage =  async (msg: {type: string, count: number}) => {
     elements.reverse().forEach((child:any) => {
       switch(child.type){
         case 'TEXT':
-          childrenString += `\telement.findChild(x => x.name === '${child.name}').characters = "${child.characters}"`
+          childrenString += `\t_setText(element,"${child.name}", "${child.characters}")\n`
         break;
         default:
           childrenString += `\t//element.findChild(x => x.name === '${child.name}')`

@@ -395,6 +395,7 @@
 
         // Frame dropdown functionality
         frameDropdown.addEventListener('change', (e) => {
+          
           currentFrame = e.target.value;
           parent.postMessage({ pluginMessage: { type: 'frameSelected', frame: currentFrame }}, '*');
         });
@@ -3521,6 +3522,8 @@ function _resize(node: SceneNode, width: number, height: number){
           }
           
           if (event.data.pluginMessage?.type === 'setCurrentFrame') {
+            //Unlock the frame
+            
             setCurrentFrame(event.data.pluginMessage.frame);
           }
           
