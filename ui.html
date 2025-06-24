@@ -3270,7 +3270,17 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
             console.log("received success")
             // Clear all error markers when code executes successfully
             monaco.editor.setModelMarkers(editor.getModel(), 'owner', [])
-            
+            monaco.editor.setModelMarkers(editor.getModel(), 'owner', logs.map((log, index) => {
+              return {
+                message: log.message,
+                severity: monaco.MarkerSeverity.Info,
+                startLineNumber: log.line ,
+                startColumn: 1,
+                endLineNumber: log.line,
+                endColumn: 100
+              }
+            }))
+            logs = []; // Clear logs after success
             // Show success state on run button
             setRunButtonState('success');
             
@@ -3315,7 +3325,9 @@ var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children`
           }
           
           if (event.data.pluginMessage?.type === 'clearErrors') {
-            monaco.editor.setModelMarkers(editor.getModel(), 'owner', []);
+            console.log("Clearing errors");
+            //logs = [];
+            //monaco.editor.setModelMarkers(editor.getModel(), 'owner', []);
           }
           
           // Reset prompt input on error or success

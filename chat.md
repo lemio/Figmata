@@ -4,7 +4,7 @@ GitHub Copilot: Here's the type definition for the `parseTSV` function:
 
 ````typescript
 type ParseTSVFunction = (tsvString: string) => Record<string, string>[];
-````
+```
 
 This type definition indicates that:
 - The function takes one parameter `tsvString` of type `string`
@@ -15,7 +15,7 @@ If you want to be more specific about the return type, you could also define it 
 ````typescript
 type TSVRow = Record<string, string>;
 type ParseTSVFunction = (tsvString: string) => TSVRow[];
-````
+```
 
 This makes it clearer that each element in the returned array represents a row from the TSV data.
 
@@ -46,7 +46,7 @@ function executeUserCode(userCode: string, context: any) {
     throw error;
   }
 }
-````
+```
 
 ## 2. Create a Safe API Wrapper
 
@@ -82,7 +82,7 @@ class SafeFigmaAPI {
     });
   }
 }
-````
+```
 
 ## 3. Enhanced Library Functions
 
@@ -132,7 +132,7 @@ const createSafeContext = (frame: FrameNode) => {
     Object,
   };
 };
-````
+```
 
 ## 4. Updated Message Handler with Safe Execution
 
@@ -183,7 +183,7 @@ figma.ui.onmessage = async (msg: {code: string}) => {
 
   debouncedFunction();
 };
-````
+```
 
 ## 5. Additional Safety Measures
 
@@ -200,7 +200,7 @@ function executeWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<
 
 // Usage in your debounced function:
 await executeWithTimeout(executeUserCode(msg.code, context), 5000);
-````
+```
 
 ## Key Benefits:
 
@@ -230,3 +230,37 @@ curl http://localhost:1234/v1/chat/completions \
 }'
 
 Make sure to add the nessecary prompts to get runnable JS output also include the current code and the structure of the current selection when running the prompt. 
+
+```js
+
+element._resize(width,height)
+
+
+//Text based functions:
+element._setText(child,text)
+
+element.setFill()
+
+element.setFillColor(color)
+element.setStrokeColor(color)
+element.setStrokeWidth(width)
+
+
+element.setProperty(name,value)
+element.getProperty(name)
+
+element.child(name)
+
+element.rotate(angle)
+
+element.move(x,y)
+
+function _resize(width, height) {
+  self = this;
+  this._width = width;
+  this._height = height;
+  this._updateSize();
+}
+
+
+```

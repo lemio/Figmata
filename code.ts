@@ -36,16 +36,56 @@ function debounce(callback: () => void, timeout: number) {
   };
 }
 
-function getLineNumberFromStack(stack: string): number {
-  if (!stack) return 0;
-  const lines = stack.split('\n');
-  for (const line of lines) {
-    const match = line.match(/:(\d+):\d+/);
-    if (match) {
-      return parseInt(match[1], 10);
-    }
-  }
-  return 0;
+function getLineNumberFromStack(err: Error): number {
+  var stack = err.stack?.toString().split(/\r\n|\n/);
+	// Regex to match line and column numbers in the stack trace
+	var frameRE = /([0-9]+)\)*$/;
+	let lineNumber = null;
+  if (stack){
+      
+	while (stack.length > 1) {
+		// Check if the frame matches the pattern
+		//var frame1 = stack.shift();
+		var frame = stack.shift() || '';
+		const match = frameRE.exec(frame);
+		if (match) {
+			lineNumber = match[1]; // Extract line number
+			break; // Exit after finding the second frame
+		}
+	}
+	if (lineNumber) {
+		return Number(lineNumber); // Print the extracted line number
+	} else {
+		console.log("No matching frame found.");
+	}
+}
+return 0;
+}
+
+function getUpperLineNumberFromStack(err: Error): number {
+  var stack = err.stack?.toString().split(/\r\n|\n/);
+	// Regex to match line and column numbers in the stack trace
+	var frameRE = /([0-9]+)\)*$/;
+	let lineNumber = null;
+  if (stack){
+      stack.shift(); // Remove the first line which is the error message
+	while (stack.length > 1) {
+		// Check if the frame matches the pattern
+		//var frame1 = stack.shift();
+		var frame = stack.shift() || '';
+		const match = frameRE.exec(frame);
+		if (match) {
+			lineNumber = match[1]; // Extract line number
+			break; // Exit after finding the second frame
+		}
+	}
+	if (lineNumber) {
+		return Number(lineNumber); // Print the extracted line number
+	} else {
+		console.log("No matching frame found.");
+	}
+}
+return 0;
 }
 
 // Helper functions for toolbar
@@ -182,7 +222,7 @@ async function handleRunCode(code: string) {
   });
   
   const debouncedFunction = debounce(() => {
-    
+      var errors = false;
       // Create dynamic prependCode with the target frame
       const dynamicPrependCode = `
       /*
@@ -193,6 +233,14 @@ async function handleRunCode(code: string) {
     line: 0,
     });
 };*/
+    function print(...args) {
+      figma.ui.postMessage({
+        type: 'log',
+        message: args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg)
+          : arg)).join(' '),
+        line: Number(getUpperLineNumberFromStack(new Error()))- Number(dynamicPrependCode.split('\\n').length + 1),
+      });
+    }
         function parseTSV(tsvText) {
   const lines = tsvText.trim().split('\\n');
   if (lines.length === 0) return [];
@@ -255,7 +303,10 @@ async function handleRunCode(code: string) {
         console,
         Promise,
         setTimeout,
-        clearTimeout
+        clearTimeout,
+        getLineNumberFromStack,
+        getUpperLineNumberFromStack,
+        dynamicPrependCode
       };
       const paramNames = Object.keys(context);
       const paramValues = Object.values(context);
@@ -263,21 +314,25 @@ async function handleRunCode(code: string) {
       const executeCode = new Function(...paramNames , codeToExecute);
       
       executeCode(...paramValues).catch((error: any) => {
+        errors = true;
         console.log("SYNTAX",error);
         console.log(dynamicPrependCode)
         console.log(dynamicPrependCode.split('\n').length + 1)
+        console.log(`Number(${getLineNumberFromStack(error)}) - Number(Number(${dynamicPrependCode.split('\n').length}) + 1)`)
         figma.ui.postMessage({
           type: 'error',
           error: String(error),
-          line: getLineNumberFromStack(error.stack) - dynamicPrependCode.split('\n').length + 1,
+          line: Number(getLineNumberFromStack(error)) - Number(Number(dynamicPrependCode.split('\n').length) + 1),
         })
         
       }).then(() => {
+        if (!errors) {
         // check if no errors were thrown          
         figma.ui.postMessage({
           type: 'success',
           message: 'Code executed successfully',
         });
+        }
       });
   }, 100);
 
