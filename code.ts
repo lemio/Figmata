@@ -182,7 +182,7 @@ async function handleRunCode(code: string) {
   });
   
   const debouncedFunction = debounce(() => {
-    try {
+    
       // Create dynamic prependCode with the target frame
       const dynamicPrependCode = `
       /*
@@ -216,7 +216,7 @@ async function handleRunCode(code: string) {
     function delay(ms){
       return new Promise(resolve => setTimeout(resolve, ms));
     }
-      (async () =>  {
+      return (async () =>  {
     let FigmaFrame = await figma.getNodeByIdAsync('${targetFrame.id}')
     let FirstChild = FigmaFrame.children[0];
     let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
@@ -250,41 +250,37 @@ async function handleRunCode(code: string) {
       
       // Execute the code and handle success/error properly
       const codeToExecute = dynamicPrependCode + code + postCode;
-      const codeResult = eval(codeToExecute);
+      const context = {
+        figma,
+        console,
+        Promise,
+        setTimeout,
+        clearTimeout
+      };
+      const paramNames = Object.keys(context);
+      const paramValues = Object.values(context);
+
+      const executeCode = new Function(...paramNames , codeToExecute);
       
-      // Check if the result is a promise (async code)
-      if (codeResult && typeof codeResult.then === 'function') {
-        codeResult.then(() => {
-          // Send success message for async code
-          figma.ui.postMessage({
-            type: 'success',
-            message: 'Code executed successfully',
-          });
-        }).catch((error: any) => {
-          console.log(error)
-          figma.ui.postMessage({
-            type: 'error',
-            error: String(error),
-            line: getLineNumberFromStack(error.stack) - dynamicPrependCode.split('\n').length + 1,
-          });
-        });
-      } else {
-        // Send success message for sync code
+      executeCode(...paramValues).catch((error: any) => {
+        console.log("SYNTAX",error);
+        console.log(dynamicPrependCode)
+        console.log(dynamicPrependCode.split('\n').length + 1)
+        figma.ui.postMessage({
+          type: 'error',
+          error: String(error),
+          line: getLineNumberFromStack(error.stack) - dynamicPrependCode.split('\n').length + 1,
+        })
+        
+      }).then(() => {
+        // check if no errors were thrown          
         figma.ui.postMessage({
           type: 'success',
           message: 'Code executed successfully',
         });
-      }
-    } catch (error: any) {
-      figma.ui.postMessage({
-        type: 'error',
-        error: String(error),
-        line: error.lineNumber || 0,
       });
-      console.log("SYNTAX ERROR", error);
-    }
   }, 100);
-  
+
   debouncedFunction();
 }
 
