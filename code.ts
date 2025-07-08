@@ -233,6 +233,160 @@ async function handleRunCode(code: string) {
     line: 0,
     });
 };*/
+
+// D3.js v7 - Data visualization library
+// Minimal D3 implementation for Figma plugin use
+const d3 = (function() {
+  // Basic selection functionality
+  function select(selector) {
+    return {
+      data: function(data) {
+        return {
+          enter: function() {
+            return {
+              append: function(type) {
+                return this;
+              }
+            };
+          },
+          exit: function() {
+            return {
+              remove: function() {
+                return this;
+              }
+            };
+          }
+        };
+      },
+      attr: function(name, value) {
+        return this;
+      },
+      style: function(name, value) {
+        return this;
+      },
+      text: function(value) {
+        return this;
+      }
+    };
+  }
+
+  // Scale functions
+  function scaleLinear() {
+    let domain = [0, 1];
+    let range = [0, 1];
+    
+    function scale(value) {
+      const domainSpan = domain[1] - domain[0];
+      const rangeSpan = range[1] - range[0];
+      return range[0] + (value - domain[0]) * rangeSpan / domainSpan;
+    }
+    
+    scale.domain = function(d) {
+      if (!arguments.length) return domain;
+      domain = d;
+      return scale;
+    };
+    
+    scale.range = function(r) {
+      if (!arguments.length) return range;
+      range = r;
+      return scale;
+    };
+    
+    return scale;
+  }
+
+  function scaleOrdinal() {
+    let domain = [];
+    let range = [];
+    
+    function scale(value) {
+      const index = domain.indexOf(value);
+      return index >= 0 ? range[index % range.length] : range[0];
+    }
+    
+    scale.domain = function(d) {
+      if (!arguments.length) return domain;
+      domain = d;
+      return scale;
+    };
+    
+    scale.range = function(r) {
+      if (!arguments.length) return range;
+      range = r;
+      return scale;
+    };
+    
+    return scale;
+  }
+
+  // Color schemes
+  const schemeCategory10 = [
+    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+  ];
+
+  // Array utility functions
+  function extent(array, accessor) {
+    if (!array || array.length === 0) return [undefined, undefined];
+    let min = Infinity;
+    let max = -Infinity;
+    
+    for (let i = 0; i < array.length; i++) {
+      const value = accessor ? accessor(array[i], i, array) : array[i];
+      if (value != null && !isNaN(value)) {
+        if (value < min) min = value;
+        if (value > max) max = value;
+      }
+    }
+    
+    return min === Infinity ? [undefined, undefined] : [min, max];
+  }
+
+  function max(array, accessor) {
+    if (!array || array.length === 0) return undefined;
+    let max = -Infinity;
+    
+    for (let i = 0; i < array.length; i++) {
+      const value = accessor ? accessor(array[i], i, array) : array[i];
+      if (value != null && !isNaN(value) && value > max) {
+        max = value;
+      }
+    }
+    
+    return max === -Infinity ? undefined : max;
+  }
+
+  function min(array, accessor) {
+    if (!array || array.length === 0) return undefined;
+    let min = Infinity;
+    
+    for (let i = 0; i < array.length; i++) {
+      const value = accessor ? accessor(array[i], i, array) : array[i];
+      if (value != null && !isNaN(value) && value < min) {
+        min = value;
+      }
+    }
+    
+    return min === Infinity ? undefined : min;
+  }
+
+  return {
+    select: select,
+    scaleLinear: scaleLinear,
+    scaleOrdinal: scaleOrdinal,
+    schemeCategory10: schemeCategory10,
+    extent: extent,
+    max: max,
+    min: min
+  };
+})();
+
+// Example D3 usage for data visualization in Figma
+// const sampleData = [10, 20, 30, 40, 50];
+// const scale = d3.scaleLinear().domain([0, 50]).range([0, 200]);
+// const colors = d3.scaleOrdinal().domain(['A', 'B', 'C']).range(d3.schemeCategory10);
+
 /**
  * Resizes a Figma node to the specified width and height while ensuring minimum size constraints
  * and handling constraint-based positioning adjustments.

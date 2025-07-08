@@ -3280,6 +3280,58 @@ function parseTSV(tsvText: string): { [key: string]: any }[] {
   return data;
 }
 `
+var d3Types = `
+// D3.js Type Definitions for Figma Plugin
+declare namespace d3 {
+  // Selection types
+  interface Selection<GElement extends Element | EnterElement | Document | Window, Datum, PElement extends Element | Document | Window | null, PDatum> {
+    data<NewDatum>(data: NewDatum[]): Selection<GElement, NewDatum, PElement, PDatum>;
+    enter(): Selection<EnterElement, Datum, PElement, PDatum>;
+    exit(): Selection<GElement, Datum, PElement, PDatum>;
+    append(type: string): Selection<GElement, Datum, PElement, PDatum>;
+    attr(name: string, value: any): Selection<GElement, Datum, PElement, PDatum>;
+    style(name: string, value: any): Selection<GElement, Datum, PElement, PDatum>;
+    text(value: any): Selection<GElement, Datum, PElement, PDatum>;
+    remove(): Selection<GElement, Datum, PElement, PDatum>;
+  }
+
+  interface EnterElement {
+    append(type: string): Selection<Element, any, any, any>;
+  }
+
+  // Scale types
+  interface ScaleLinear<Range, Output> {
+    (value: number): Output;
+    domain(): number[];
+    domain(domain: number[]): this;
+    range(): Range[];
+    range(range: Range[]): this;
+  }
+
+  interface ScaleOrdinal<Domain, Range> {
+    (value: Domain): Range;
+    domain(): Domain[];
+    domain(domain: Domain[]): this;
+    range(): Range[];
+    range(range: Range[]): this;
+  }
+
+  // Function declarations
+  function select(selector: string): Selection<Element, any, null, undefined>;
+  function scaleLinear(): ScaleLinear<number, number>;
+  function scaleOrdinal<Domain = string, Range = string>(): ScaleOrdinal<Domain, Range>;
+  
+  // Array functions
+  function extent<T>(array: T[], accessor?: (datum: T, index: number, array: T[]) => number | undefined): [number, number] | [undefined, undefined];
+  function max<T>(array: T[], accessor?: (datum: T, index: number, array: T[]) => number | undefined): number | undefined;
+  function min<T>(array: T[], accessor?: (datum: T, index: number, array: T[]) => number | undefined): number | undefined;
+
+  // Color schemes
+  const schemeCategory10: string[];
+}
+
+declare const d3: typeof d3;
+`
 var editor
         require(['vs/editor/editor.main'], function() {
             editor = monaco.editor.create(document.getElementById('monaco-editor'), {
@@ -3374,9 +3426,18 @@ var editor
               figmaTypes
             );
             monaco.languages.typescript.javascriptDefaults.addExtraLib(
+              d3Types
+            );
+            monaco.languages.typescript.javascriptDefaults.addExtraLib(
               `var FigmaFrame:SceneNode = figma.currentPage.selection[0]
 var FirstChild:InstanceNode = FigmaFrame.children[0];
 var originalChildren:ReadonlyArray<SceneNode> = FigmaFrame.children
+
+// D3.js is available for data visualization
+// Example usage:
+// const sampleData = [10, 20, 30, 40, 50];
+// const scale = d3.scaleLinear().domain([0, 50]).range([0, 200]);
+// const colors = d3.scaleOrdinal().domain(['A', 'B', 'C']).range(d3.schemeCategory10);
   
   /**
  * Resizes a Figma node to the specified width and height while ensuring minimum size constraints
