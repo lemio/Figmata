@@ -487,17 +487,28 @@ function _setText(node, name, text){
     } catch (e) {
       console.error("font error", e);
     }
-    let originalChildren = FigmaFrame.children
+      let originalChildren = FigmaFrame.children
+      if (typeof preProcess === 'function') {
+        preProcess();
+    }else{
+    
     originalChildren.slice(1).forEach(child => {
         child.remove();
       });
+    }
       `;
       
       const postCode = `
+      if (typeof postProcess === 'function') {
+      postProcess();
+  }else{
       originalChildren.slice(0,1).forEach(child => {
         console.log(child)
         child.remove();
       });
+    }
+      preProcess = null;
+      postProcess = null;
       
           })()`
       console.log(dynamicPrependCode + code + postCode)
