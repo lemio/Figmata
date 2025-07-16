@@ -442,13 +442,18 @@ function _setText(node, name, text){
   }
 }
     function print(...args) {
+    try {
       figma.ui.postMessage({
         type: 'log',
         message: args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg)
           : arg)).join(' '),
         line: Number(getUpperLineNumberFromStack(new Error()))- Number(dynamicPrependCode.split('\\n').length + 1),
       });
+  } catch (error) {
+      console.error('Error in print function:', error);
+      
     }
+  }
         function parseTSV(tsvText) {
   const lines = tsvText.trim().split('\\n');
   if (lines.length === 0) return [];
