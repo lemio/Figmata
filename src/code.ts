@@ -11,6 +11,8 @@
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser environment (See https://www.figma.com/plugin-docs/how-plugins-run).
 
+import * as d3 from 'd3';
+
 // This shows the HTML page in "ui.html".
 figma.showUI(__html__);
 figma.ui.resize(600, 1000);
@@ -233,7 +235,7 @@ async function handleRunCode(code: string) {
     line: 0,
     });
 };*/
-
+/*
 // D3.js v7 - Data visualization library
 // Minimal D3 implementation for Figma plugin use
 const d3 = (function() {
@@ -381,7 +383,7 @@ const d3 = (function() {
     min: min
   };
 })();
-
+*/
 // Example D3 usage for data visualization in Figma
 // const sampleData = [10, 20, 30, 40, 50];
 // const scale = d3.scaleLinear().domain([0, 50]).range([0, 200]);
@@ -523,7 +525,8 @@ function _setText(node, name, text){
         clearTimeout,
         getLineNumberFromStack,
         getUpperLineNumberFromStack,
-        dynamicPrependCode
+        dynamicPrependCode,
+        d3
       };
       const paramNames = Object.keys(context);
       const paramValues = Object.values(context);

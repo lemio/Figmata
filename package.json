@@ -4,9 +4,7 @@
   "description": "Your Figma Plugin",
   "main": "code.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
-    "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
+    "build": "webpack",
     "watch": "npm run build -- --watch"
   },
   "author": "",
@@ -14,10 +12,14 @@
   "devDependencies": {
     "@figma/eslint-plugin-figma-plugins": "*",
     "@figma/plugin-typings": "*",
+    "@types/d3": "^7.4.3",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
     "eslint": "^8.54.0",
-    "typescript": "^5.3.2"
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.100.1",
+    "webpack-cli": "^6.0.1"
   },
   "eslintConfig": {
     "extends": [
@@ -42,6 +44,7 @@
     }
   },
   "dependencies": {
+    "d3": "^7.9.0",
     "monaco-editor": "^0.52.2"
   }
 }
