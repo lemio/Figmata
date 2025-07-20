@@ -1,6 +1,14 @@
 import { FrameInfo, LogEntry } from '../../../shared/types/messages';
 import { StateManager } from './state-manager';
 
+declare global {
+  interface Window {
+    monaco: any;
+    monacoEditor: any;
+    inlineLogsData: Map<number, string>;
+  }
+}
+
 export class UIUpdater {
   private stateManager: StateManager;
 
@@ -38,7 +46,7 @@ export class UIUpdater {
 
   updateEditor(code: string): void {
     // This will be implemented when we set up Monaco editor
-    const editor = (window as any).monacoEditor;
+    const editor = window.monacoEditor;
     if (editor) {
       editor.setValue(code);
     }
@@ -155,18 +163,36 @@ export class UIUpdater {
   }
 
   addInlineLog(lineNumber: number, message: string): void {
+    console.log(`Adding inline log for line ${lineNumber}: ${message}`);
     // Store the log message for the inlay hints provider
-    if (!(window as any).inlineLogsData) {
-      (window as any).inlineLogsData = new Map();
+    if (!window.inlineLogsData) {
+      console.log('Initializing inlineLogsData');
+      window.inlineLogsData = new Map();
     }
-    (window as any).inlineLogsData.set(lineNumber, message);
+    console.log('inlineLogsData before adding:', window.inlineLogsData.size, 'entries');
+    
+    const adjustedLineNumber = lineNumber - 29;
+    
+    // Check if this line already has logs - if so, accumulate them
+    if (window.inlineLogsData.has(adjustedLineNumber)) {
+      const existingMessage = window.inlineLogsData.get(adjustedLineNumber);
+      const combinedMessage = `${existingMessage} ${message}`;
+      window.inlineLogsData.set(adjustedLineNumber, combinedMessage);
+      console.log(`Accumulated log for line ${adjustedLineNumber}: ${combinedMessage}`);
+    } else {
+      window.inlineLogsData.set(adjustedLineNumber, message);
+      console.log(`New log for line ${adjustedLineNumber}: ${message}`);
+    }
+    
+    console.log('inlineLogsData after adding:', window.inlineLogsData.size, 'entries');
+    console.log('All inline logs:', Array.from(window.inlineLogsData.entries()));
 
     // Trigger inlay hints refresh
     this.refreshInlayHints();
   }
 
   clearInlineLogsForLine(lineNumber: number): void {
-    const logsData = (window as any).inlineLogsData;
+    const logsData = window.inlineLogsData;
     if (logsData && logsData.has(lineNumber)) {
       logsData.delete(lineNumber);
       this.refreshInlayHints();
@@ -174,23 +200,76 @@ export class UIUpdater {
   }
 
   clearAllInlineLogs(): void {
-    const logsData = (window as any).inlineLogsData;
+    console.log('Clearing all inline logs');
+    const logsData = window.inlineLogsData;
     if (logsData) {
+      console.log('Found inline logs data to clear:', logsData.size, 'entries');
       logsData.clear();
       this.refreshInlayHints();
+    } else {
+      console.log('No inline logs data to clear');
     }
   }
 
   private refreshInlayHints(): void {
-    const editor = (window as any).monacoEditor;
+    console.log('Refreshing inlay hints');
+    console.log('Current inline logs data:', window.inlineLogsData);
+    const editor = window.monacoEditor;
     if (editor && window.monaco) {
-      // Trigger inlay hints refresh by calling the refresh method
-      if (editor.getContribution && editor.getContribution('editor.contrib.inlayHints')) {
-        const inlayHintsController = editor.getContribution('editor.contrib.inlayHints');
-        if (inlayHintsController && inlayHintsController.refresh) {
-          inlayHintsController.refresh();
-        }
-      }
+        console.log('Editor and monaco available, triggering refresh');
+        
+        // Force multiple refresh strategies to ensure hints are updated
+        setTimeout(() => {
+            try {
+                // Strategy 1: Layout refresh
+                editor.layout();
+                
+                // Strategy 2: Trigger inlay hints refresh action
+                const action = editor.getAction('editor.action.inlayHints.refresh');
+                if (action) {
+                    action.run();
+                }
+                
+                // Strategy 3: Force a model content change to trigger refresh
+                /*const model = editor.getModel();
+                if (model) {
+                    const position = editor.getPosition();
+                    // Trigger a tiny change and then revert it to force refresh
+                    model.pushEditOperations([], [{
+                        range: new window.monaco.Range(1, 1, 1, 1),
+                        text: ' '
+                    }], () => null);
+                    model.pushEditOperations([], [{
+                        range: new window.monaco.Range(1, 1, 1, 2),
+                        text: ''
+                    }], () => null);
+                    
+                    // Restore cursor position
+                    if (position) {
+                        editor.setPosition(position);
+                    }
+                }*/
+                
+                // Strategy 4: Force render
+                editor.render(true);
+                
+            } catch (error) {
+                console.log('Error refreshing inlay hints:', error);
+            }
+        }, 10);
+        
+        // Also try a second refresh slightly later
+        setTimeout(() => {
+            try {
+                editor.render(true);
+                const action = editor.getAction('editor.action.inlayHints.refresh');
+                if (action) {
+                    action.run();
+                }
+            } catch (error) {
+                console.log('Error in delayed refresh:', error);
+            }
+        }, 100);
     }
   }
 

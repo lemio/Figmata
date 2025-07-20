@@ -37,7 +37,7 @@ class UIController {
   }
 
   private initializeComponents(): void {
-    this.toolbar = new Toolbar(this.stateManager, this.messageSender);
+    this.toolbar = new Toolbar(this.stateManager, this.messageSender, this.uiUpdater);
     this.editor = new Editor(this.stateManager);
     
     // Handle window resize for editor layout

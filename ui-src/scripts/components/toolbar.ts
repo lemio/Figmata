@@ -1,9 +1,11 @@
 import { StateManager } from '../services/state-manager';
 import { MessageSender } from '../services/message-sender';
+import { UIUpdater } from '../services/ui-updater';
 
 export class Toolbar {
   private stateManager: StateManager;
   private messageSender: MessageSender;
+  private uiUpdater: UIUpdater;
   private elements!: {
     runButton: HTMLButtonElement;
     frameDropdown: HTMLSelectElement;
@@ -14,9 +16,10 @@ export class Toolbar {
     clearConsole: HTMLButtonElement;
   };
 
-  constructor(stateManager: StateManager, messageSender: MessageSender) {
+  constructor(stateManager: StateManager, messageSender: MessageSender, uiUpdater: UIUpdater) {
     this.stateManager = stateManager;
     this.messageSender = messageSender;
+    this.uiUpdater = uiUpdater;
     this.initializeElements();
     this.setupEventListeners();
   }
@@ -82,6 +85,9 @@ export class Toolbar {
       return;
     }
 
+    // Clear inline logs from previous execution
+    this.uiUpdater.clearAllInlineLogs();
+    
     this.stateManager.setExecutionState('running');
     this.messageSender.runCode(code);
   }

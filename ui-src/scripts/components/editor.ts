@@ -5,6 +5,7 @@ declare global {
   interface Window {
     monaco: any;
     monacoEditor: any;
+    inlineLogsData: Map<number, string>;
   }
 }
 
@@ -224,9 +225,13 @@ export class Editor {
     // Register inlay hints provider for inline logs
     window.monaco.languages.registerInlayHintsProvider('javascript', {
       provideInlayHints: (model: any, range: any, _token: any) => {
-        const logsData = (window as any).inlineLogsData;
-        if (!logsData) return { hints: [] };
+        const logsData = window.inlineLogsData;
+        if (!logsData) {
+          console.log('No inline logs data available');
+          return { hints: [] };
+        }
 
+        console.log('Providing inlay hints for range:', range, 'with data:', logsData);
         const hints: any[] = [];
         const lineCount = model.getLineCount();
 
@@ -236,14 +241,15 @@ export class Editor {
             const message = logsData.get(lineNumber);
             const lineLength = model.getLineLength(lineNumber);
             
+            console.log(`Adding hint for line ${lineNumber}: ${message}`);
             hints.push({
               position: {
                 lineNumber: lineNumber,
                 column: lineLength + 1
               },
-              label: ` // ➤ ${message}`,
+              label: ` ➤ ${message}`,
               kind: window.monaco.languages.InlayHintKind.Other,
-              tooltip: `Log output: ${message}`,
+              tooltip: `${message}`,
               paddingLeft: true,
               // Custom styling for the hint
               textEdits: undefined
@@ -251,6 +257,7 @@ export class Editor {
           }
         }
 
+        console.log(`Returning ${hints.length} hints`);
         return { hints };
       }
     });

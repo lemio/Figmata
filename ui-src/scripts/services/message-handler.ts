@@ -2,6 +2,14 @@ import { UIMessage } from '../../../shared/types/messages';
 import { StateManager } from './state-manager';
 import { UIUpdater } from './ui-updater';
 
+declare global {
+  interface Window {
+    monaco: any;
+    monacoEditor: any;
+    inlineLogsData: Map<number, string>;
+  }
+}
+
 export class MessageHandler {
   private stateManager: StateManager;
   private uiUpdater: UIUpdater;
@@ -76,8 +84,8 @@ export class MessageHandler {
   }
 
   private handleExecutionResult(message: any): void {
-    // Clear all previous inline logs before showing new results
-    this.uiUpdater.clearAllInlineLogs();
+    // Don't clear inline logs immediately - let them persist for viewing
+    // this.uiUpdater.clearAllInlineLogs();
     
     this.stateManager.setExecutionState(message.success ? 'success' : 'error');
     
@@ -95,6 +103,9 @@ export class MessageHandler {
         timestamp: Date.now()
       });
     }
+    
+    // Force refresh inlay hints after execution completes
+    this.forceRefreshInlayHints();
   }
 
   private handleFramesUpdated(message: any): void {
@@ -151,8 +162,48 @@ export class MessageHandler {
 
   private handleLogMessage(message: any): void {
     // Handle inline log messages like Quokka.js
+    console.log('Received log message:', message);
+    this.uiUpdater.addConsoleLog({
+        type: 'log',
+        message: message.message,
+        timestamp: Date.now()
+      });
     if (message.line && message.message) {
-      this.uiUpdater.addInlineLog(message.line, message.message);
+      const lineNumber = Number(message.line);
+      if (!isNaN(lineNumber)) {
+        console.log(`Adding inline log for line ${lineNumber}: ${message.message}`);
+        this.uiUpdater.addInlineLog(lineNumber, message.message);
+      } else {
+        console.log('Invalid line number:', message.line, typeof message.line);
+      }
+    } else {
+      console.log('Log message missing line or message:', { line: message.line, message: message.message });
+    }
+  }
+
+  private forceRefreshInlayHints(): void {
+    console.log('Forcing inlay hints refresh after execution');
+    const editor = window.monacoEditor;
+    if (editor && window.monaco) {
+      // Multiple strategies to force refresh
+      setTimeout(() => {
+        try {
+          // Force a viewport change to trigger inlay hints
+          const scrollTop = editor.getScrollTop();
+          editor.setScrollTop(scrollTop + 1);
+          editor.setScrollTop(scrollTop);
+          
+          // Also trigger the refresh action
+          const action = editor.getAction('editor.action.inlayHints.refresh');
+          if (action) {
+            action.run();
+          }
+          
+          editor.render(true);
+        } catch (error) {
+          console.log('Error in force refresh:', error);
+        }
+      }, 200);
     }
   }
 }
