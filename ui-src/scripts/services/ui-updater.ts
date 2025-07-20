@@ -176,7 +176,7 @@ export class UIUpdater {
     // Check if this line already has logs - if so, accumulate them
     if (window.inlineLogsData.has(adjustedLineNumber)) {
       const existingMessage = window.inlineLogsData.get(adjustedLineNumber);
-      const combinedMessage = `${existingMessage} ${message}`;
+      const combinedMessage = `${existingMessage}\n${message}`;
       window.inlineLogsData.set(adjustedLineNumber, combinedMessage);
       console.log(`Accumulated log for line ${adjustedLineNumber}: ${combinedMessage}`);
     } else {

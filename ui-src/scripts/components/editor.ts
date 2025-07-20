@@ -247,7 +247,7 @@ export class Editor {
                 lineNumber: lineNumber,
                 column: lineLength + 1
               },
-              label: ` ➤ ${message}`,
+              label: ` ➤ ${(message ?? '').split('\n').join(';')}`,
               kind: window.monaco.languages.InlayHintKind.Other,
               tooltip: `${message}`,
               paddingLeft: true,
