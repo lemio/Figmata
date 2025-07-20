@@ -1,0 +1,108 @@
+.editor {
+    width: 100%;
+    height: 100%;
+}
+
+/* Monaco Editor Theme Adjustments */
+.monaco-editor {
+    background-color: #fafafa !important;
+}
+
+.monaco-editor .margin {
+    background-color: #f5f5f5 !important;
+}
+
+.monaco-editor .current-line {
+    background-color: #f0f8ff !important;
+}
+
+/* Inlay Hints Styling */
+.monaco-editor .codicon-lightbulb {
+    color: #0066cc;
+}
+
+/* Error and Warning Decorations */
+.monaco-editor .squiggly-error {
+    border-bottom: 2px wavy #ff0000;
+}
+
+.monaco-editor .squiggly-warning {
+    border-bottom: 2px wavy #ffa500;
+}
+
+/* Selection */
+.monaco-editor .selected-text {
+    background-color: #add6ff !important;
+}
+
+/* Scrollbar */
+.monaco-editor .scrollbar {
+    background-color: transparent;
+}
+
+.monaco-editor .slider {
+    background-color: rgba(100, 100, 100, 0.4);
+}
+
+.monaco-editor .slider:hover {
+    background-color: rgba(100, 100, 100, 0.6);
+}
+
+/* Inlay Hints for Inline Logs (Quokka.js style) */
+.monaco-editor .inline-hints-widget {
+    color: #6a994e !important;
+    background-color: rgba(106, 153, 78, 0.1) !important;
+    border-radius: 3px !important;
+    padding: 2px 6px !important;
+    font-style: italic !important;
+    font-size: 12px !important;
+    border: 1px solid rgba(106, 153, 78, 0.3) !important;
+    white-space: nowrap !important;
+    margin-left: 8px !important;
+}
+
+/* Monaco's inlay hints container */
+.monaco-editor .inlay-hints-widget .inlay-hints-label {
+    color: #6a994e !important;
+    background-color: rgba(106, 153, 78, 0.1) !important;
+    border-radius: 3px !important;
+    padding: 1px 4px !important;
+    font-style: italic !important;
+    font-size: 11px !important;
+    border: 1px solid rgba(106, 153, 78, 0.3) !important;
+    margin-left: 6px !important;
+    opacity: 0.8 !important;
+}
+
+/* Alternative selectors for different Monaco versions */
+.monaco-editor .inlayHints-widget,
+.monaco-editor .ghost-text-decoration {
+    color: #6a994e !important;
+    background-color: rgba(106, 153, 78, 0.1) !important;
+    border-radius: 3px !important;
+    padding: 1px 4px !important;
+    font-style: italic !important;
+    font-size: 11px !important;
+    border: 1px solid rgba(106, 153, 78, 0.3) !important;
+    margin-left: 6px !important;
+    opacity: 0.8 !important;
+}
+
+/* Different colors for different log types */
+.inline-log-content.log-info {
+    color: #386ba6 !important;
+    background-color: rgba(56, 107, 166, 0.1) !important;
+    border-color: rgba(56, 107, 166, 0.3) !important;
+}
+
+.inline-log-content.log-warning {
+    color: #f77f00 !important;
+    background-color: rgba(247, 127, 0, 0.1) !important;
+    border-color: rgba(247, 127, 0, 0.3) !important;
+}
+
+.inline-log-content.log-error {
+    color: #d62828 !important;
+    background-color: rgba(214, 40, 40, 0.1) !important;
+    border-color: rgba(214, 40, 40, 0.3) !important;
+}

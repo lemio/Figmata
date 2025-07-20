@@ -1,0 +1,124 @@
+.frame-dropdown {
+    min-width: 150px;
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    font-size: 12px;
+    color: #333;
+}
+
+.frame-dropdown:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.lock-button {
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+}
+
+.lock-button.locked {
+    background: #0066cc;
+    color: white;
+}
+
+.lock-button.locked:hover {
+    background: #0052a3;
+}
+
+.auto-refresh-button {
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+}
+
+.auto-refresh-button.active {
+    background: #0066cc;
+    color: white;
+}
+
+.auto-refresh-button.active svg path {
+    stroke: white;
+}
+
+.ai-prompt-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+.prompt-input {
+    border: none;
+    outline: none;
+    padding: 4px 8px;
+    font-size: 12px;
+    min-width: 250px;
+    background: transparent;
+}
+
+.prompt-input::placeholder {
+    color: #999;
+}
+
+.generate-button {
+    width: 28px;
+    height: 28px;
+    justify-content: center;
+    margin: 0;
+    border-radius: 2px;
+}
+
+.generate-button:hover {
+    background: #f0f0f0;
+}
+
+.run-button {
+    background: #0066cc;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.run-button:hover {
+    background: #0052a3;
+}
+
+.run-button:active {
+    background: #004080;
+}
+
+.run-button.running {
+    background: #ffa500;
+    color: white;
+}
+
+.run-button.success {
+    background: #28a745;
+    color: white;
+}
+
+.run-button.error {
+    background: #dc3545;
+    color: white;
+}
+
+.run-button svg {
+    animation: none;
+}
+
+.run-button.running svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

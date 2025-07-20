@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "lib": ["es6"],
+    "target": "es2017",
+    "lib": ["es2017", "dom"],
     "strict": false,
     "typeRoots": [
       "./node_modules/@types",
@@ -11,9 +11,24 @@
     "jsx": "react",
     "allowJs": true,
     "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["shared/*"],
+      "@src/*": ["src/*"],
+      "@ui/*": ["ui-src/*"]
+    }
   },
   "include": [
-    "./src/**/*.ts",
+    "src/**/*.ts",
+    "ui-src/**/*.ts", 
+    "shared/**/*.ts",
     "./node_modules/@figma/**/*.d.ts"
   ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "plugin-src"
+  ]
 }

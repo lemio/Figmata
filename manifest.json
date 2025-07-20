@@ -9,7 +9,7 @@
   "editorType": [
     "figma"
   ],
-  "ui": "ui.html",
+  "ui": "dist/ui.html",
   "networkAccess": {
     "allowedDomains": [
       "https://cdnjs.cloudflare.com",
