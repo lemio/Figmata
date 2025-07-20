@@ -12,6 +12,8 @@ export class Editor {
   private stateManager: StateManager;
   private editor: any;
   private isInitialized = false;
+  private autoRefreshTimer: number | null = null;
+  private readonly autoRefreshDelay = 500; // 1 second debounce
 
   constructor(stateManager: StateManager) {
     this.stateManager = stateManager;
@@ -111,6 +113,9 @@ export class Editor {
     this.editor.onDidChangeModelContent(() => {
       const code = this.editor.getValue();
       this.stateManager.setCurrentCode(code);
+      
+      // Trigger autorefresh if enabled
+      this.scheduleAutoRefresh();
     });
 
     // Listen for key combinations
@@ -253,6 +258,42 @@ export class Editor {
     console.log('Monaco inlay hints provider registered');
   }
 
+  private scheduleAutoRefresh(): void {
+    // Clear existing timer
+    if (this.autoRefreshTimer) {
+      clearTimeout(this.autoRefreshTimer);
+    }
+
+    // Only schedule if autorefresh is enabled
+    if (!this.stateManager.isAutoRefreshEnabled()) {
+      return;
+    }
+
+    // Debounce the execution
+    this.autoRefreshTimer = window.setTimeout(() => {
+      this.triggerAutoRefresh();
+    }, this.autoRefreshDelay);
+  }
+
+  private triggerAutoRefresh(): void {
+    const code = this.getValue();
+    if (!code.trim()) {
+      return;
+    }
+
+    // Don't trigger autorefresh if code is currently running
+    if (this.stateManager.getExecutionState() === 'running') {
+      return;
+    }
+
+    // Trigger the run button
+    const runButton = document.getElementById('runButton') as HTMLButtonElement;
+    if (runButton && !runButton.disabled) {
+      console.log('Auto-refresh triggered');
+      runButton.click();
+    }
+  }
+
   setValue(code: string): void {
     if (this.editor && this.isInitialized) {
       this.editor.setValue(code);
@@ -275,6 +316,13 @@ export class Editor {
   layout(): void {
     if (this.editor && this.isInitialized) {
       this.editor.layout();
+    }
+  }
+
+  clearAutoRefreshTimer(): void {
+    if (this.autoRefreshTimer) {
+      clearTimeout(this.autoRefreshTimer);
+      this.autoRefreshTimer = null;
     }
   }
 }

@@ -115,7 +115,16 @@ export class Toolbar {
   }
 
   private handleToggleAutoRefresh(): void {
+    const currentState = this.stateManager.isAutoRefreshEnabled();
+    const newState = !currentState;
+    
+    // Update local state immediately for responsive UI
+    this.stateManager.setAutoRefreshState(newState);
+    
+    // Send message to plugin
     this.messageSender.toggleAutoRefresh();
+    
+    console.log(`Auto-refresh ${newState ? 'enabled' : 'disabled'}`);
   }
 
   private handleGenerateCode(): void {
