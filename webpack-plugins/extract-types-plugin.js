@@ -60,15 +60,15 @@ class ExtractTypesPlugin {
               if (fs.existsSync(modulePath)) {
                 const content = fs.readFileSync(modulePath, 'utf8');
                 // Clean up the content for Monaco consumption
-                const cleanedContent = content
+                /*const cleanedContent = content
                   .replace(/\/\/\/ <reference [^>]*>/g, '') // Remove triple-slash references
                   .replace(/export \* from ['""][^'"]*['""]/g, '') // Remove re-exports
                   .replace(/export \{[^}]*\} from ['""][^'"]*['""]/g, '') // Remove named re-exports
                   .replace(/export default [^;]*;/g, '') // Remove default exports
                   .replace(/export (declare )?/g, 'declare ') // Convert exports to declares
-                  .trim();
-                if (cleanedContent && cleanedContent.length > 10) {
-                  d3Types += `\n// Types from ${moduleName}\n${cleanedContent}\n`;
+                  .trim();*/
+                if (content && content.length > 10) {
+                  d3Types += `\n// Types from ${moduleName}\n${content}\n`;
                 }
               }
             });
