@@ -55,9 +55,21 @@ export class MessageHandler {
   private handlePluginReady(message: any): void {
     this.stateManager.setFrames(message.frames);
     
+    // If a specific frame is selected (e.g., from canvas selection), update state
+    if (message.selectedFrameId && !this.stateManager.isFrameLocked()) {
+      this.stateManager.setSelectedFrame(message.selectedFrameId);
+      
+      // Update dropdown to reflect the selected frame
+      const frameDropdown = document.getElementById('frameDropdown') as HTMLSelectElement;
+      if (frameDropdown) {
+        frameDropdown.value = message.selectedFrameId;
+      }
+    }
+    
     if (message.initialCode) {
       this.stateManager.setCurrentCode(message.initialCode);
       this.uiUpdater.updateEditor(message.initialCode);
+      console.log('Editor updated with code from frame:', message.selectedFrameId || 'current');
     }
     
     this.uiUpdater.updateFrameDropdown(message.frames);
@@ -75,6 +87,14 @@ export class MessageHandler {
       });
     }
     
+    // If there's an error message but no logs, display the error in console
+    if (!message.success && message.error && (!message.logs || message.logs.length === 0)) {
+      this.uiUpdater.addConsoleLog({
+        type: 'error',
+        message: message.error,
+        timestamp: Date.now()
+      });
+    }
   }
 
   private handleFramesUpdated(message: any): void {
@@ -126,9 +146,6 @@ export class MessageHandler {
           frameDropdown.value = effectiveFrameId;
         }
       }
-      
-      // Load existing code for this frame if available
-      // This will be handled by requesting code from the plugin
     }
   }
 

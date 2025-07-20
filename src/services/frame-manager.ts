@@ -57,6 +57,11 @@ export class FrameManager {
         return true;
       }
     } else {
+      // When unlocking, select the currently locked frame to avoid accidental overwrites
+      if (this.lockedFrame) {
+        figma.currentPage.selection = [this.lockedFrame];
+        this.logger.log(`Selected locked frame ${this.lockedFrame.name} before unlocking`);
+      }
       this.lockedFrame = null;
       this.logger.log('Unlocked frame');
       return true;

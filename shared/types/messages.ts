@@ -47,6 +47,7 @@ export interface PluginReadyMessage extends BaseMessage {
   type: 'PLUGIN_READY';
   frames: FrameInfo[];
   initialCode?: string;
+  selectedFrameId?: string;
 }
 
 export interface LockStateUpdatedMessage extends BaseMessage {

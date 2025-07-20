@@ -152,42 +152,22 @@ class PluginController {
       if (this.frameManager.isFrameLocked()) {
         const lockedFrame = this.frameManager.getLockedFrame();
         if (lockedFrame && lockedFrame.id !== frameId) {
-          // Just notify UI about the selection but don't load code
-          this.sendToUI({
-            type: 'setCurrentFrame',
-            frame: {
-              id: lockedFrame.id,
-              name: lockedFrame.name,
-              hasCode: lockedFrame.getPluginData('code') !== ''
-            },
-            timestamp: Date.now()
-          } as any);
+          // Keep the locked frame active
           return;
         }
       }
 
       const code = await this.frameManager.getFrameCode(frameId);
+      const finalCode = code || this.figmaManager.generateTemplateCode();
       
-      // Notify UI about the selected frame
+      // Send combined message with frame selection and code
       this.sendToUI({
-        type: 'setCurrentFrame',
-        frame: {
-          id: frame.id,
-          name: frame.name,
-          hasCode: code !== ''
-        },
+        type: MESSAGE_TYPES.PLUGIN_READY,
+        frames: this.frameManager.getAvailableFrames(),
+        initialCode: finalCode,
+        selectedFrameId: frameId,
         timestamp: Date.now()
-      } as any);
-      
-      // Send the code back to UI if frame has saved code
-      if (code) {
-        this.sendToUI({
-          type: MESSAGE_TYPES.PLUGIN_READY,
-          frames: this.frameManager.getAvailableFrames(),
-          initialCode: code,
-          timestamp: Date.now()
-        });
-      }
+      });
     }
   }
 
@@ -227,6 +207,8 @@ class PluginController {
 
   private async toggleLock(frameId?: string): Promise<void> {
     const wasLocked = this.frameManager.isFrameLocked();
+    const previousLockedFrame = this.frameManager.getLockedFrame();
+    
     await this.frameManager.lockFrame(frameId);
     const isNowLocked = this.frameManager.isFrameLocked();
     
@@ -237,31 +219,35 @@ class PluginController {
       timestamp: Date.now()
     });
 
-    // If we just locked to a frame, notify UI about the locked frame
+    // If we just locked to a frame, load code for the locked frame
     if (!wasLocked && isNowLocked && frameId) {
       const lockedFrame = this.frameManager.getLockedFrame();
       if (lockedFrame) {
-        this.sendToUI({
-          type: 'setCurrentFrame',
-          frame: {
-            id: lockedFrame.id,
-            name: lockedFrame.name,
-            hasCode: lockedFrame.getPluginData('code') !== ''
-          },
-          timestamp: Date.now()
-        } as any);
-
-        // Load code for the locked frame
         const code = await this.frameManager.getFrameCode(lockedFrame.id);
-        if (code) {
-          this.sendToUI({
-            type: MESSAGE_TYPES.PLUGIN_READY,
-            frames: this.frameManager.getAvailableFrames(),
-            initialCode: code,
-            timestamp: Date.now()
-          });
-        }
+        const finalCode = code || this.figmaManager.generateTemplateCode();
+        
+        this.sendToUI({
+          type: MESSAGE_TYPES.PLUGIN_READY,
+          frames: this.frameManager.getAvailableFrames(),
+          initialCode: finalCode,
+          selectedFrameId: lockedFrame.id,
+          timestamp: Date.now()
+        });
       }
+    }
+    
+    // If we just unlocked, update UI with the previously locked frame (now selected)
+    if (wasLocked && !isNowLocked && previousLockedFrame) {
+      const code = await this.frameManager.getFrameCode(previousLockedFrame.id);
+      const finalCode = code || this.figmaManager.generateTemplateCode();
+      
+      this.sendToUI({
+        type: MESSAGE_TYPES.PLUGIN_READY,
+        frames: this.frameManager.getAvailableFrames(),
+        initialCode: finalCode,
+        selectedFrameId: previousLockedFrame.id,
+        timestamp: Date.now()
+      });
     }
   }
 
@@ -300,31 +286,22 @@ class PluginController {
     const currentFrame = this.frameManager.getCurrentFrame();
     
     if (currentFrame) {
-      // Send frame selection update to UI
-      this.sendToUI({
-        type: 'setCurrentFrame',
-        frame: {
-          id: currentFrame.id,
-          name: currentFrame.name,
-          hasCode: currentFrame.getPluginData('code') !== ''
-        },
-        timestamp: Date.now()
-      } as any);
-      
-      // Load existing code for this frame
+      // Always load existing code for this frame (regardless of autorefresh state)
       const code = await this.frameManager.getFrameCode(currentFrame.id);
-      if (code && this.autoRefreshEnabled) {
-        this.sendToUI({
-          type: MESSAGE_TYPES.PLUGIN_READY,
-          frames: this.frameManager.getAvailableFrames(),
-          initialCode: code,
-          timestamp: Date.now()
-        });
-      }
+      const finalCode = code || this.figmaManager.generateTemplateCode();
+      
+      // Send a combined message with frame info and code
+      this.sendToUI({
+        type: MESSAGE_TYPES.PLUGIN_READY,
+        frames: this.frameManager.getAvailableFrames(),
+        initialCode: finalCode,
+        selectedFrameId: currentFrame.id,
+        timestamp: Date.now()
+      });
+    } else {
+      // No frame selected, just update the frames list
+      await this.refreshFrames();
     }
-    
-    // Update frames list
-    await this.refreshFrames();
   }
 
   private sendToUI(message: UIMessage): void {
