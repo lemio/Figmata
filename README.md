@@ -13,12 +13,12 @@ A plugin for Figma to visualize data from json or csv
        ![image](https://github.com/user-attachments/assets/3fdf2de9-1738-4ddf-9a5d-5f723b77cec0)
 
 
-  * [ ] Have a safer function for scaling (where 0 is allowed, where it scales related to how it is auto aligned to the frame... , changing the characters allow for numbers, colour allow for HEX names or RGB etc d3 schemes https://d3js.org/d3-scale-chromatic/categorical
-* [ ] Add more deliberite choise on what you are currently editing (and how to switch between contexts), currently the focus is not sufficient since users might start chaning elements in the meantime.
+  * [x] Have a safer function for scaling (where 0 is allowed, where it scales related to how it is auto aligned to the frame... , changing the characters allow for numbers, colour allow for HEX names or RGB etc d3 schemes https://d3js.org/d3-scale-chromatic/categorical
+* [x] Add more deliberite choise on what you are currently editing (and how to switch between contexts), currently the focus is not sufficient since users might start chaning elements in the meantime.
 
-  * [ ] Add a pause sync button?
-  * [ ] Add a connect button?
-  * [ ] See a list of elements on the page (like files in VScode)
+  * [x] Add a pause sync button, now it is a deliberate auto-refresh button
+  * [x] Add a lock to components button
+  * [x] See a list of elements on the page (like files in VScode)
   * [ ] Be able to map data to the page and have the charts 'depend' on this global context
 * [ ] Better examples:
 
@@ -34,8 +34,6 @@ A plugin for Figma to visualize data from json or csv
 Sketch of how it could be: 
 ![image](https://github.com/user-attachments/assets/70de0dcf-3cee-4cbf-9c1f-c021704061aa)
 
-
-
 Below are the steps to get your plugin running. You can also find instructions at:
 
   https://www.figma.com/plugin-docs/plugin-quickstart-guide/
@@ -49,11 +47,11 @@ libraries. You can find the download link here:
 
 Next, install TypeScript using the command:
 
-  npm install -g typescript
+  npm install
 
-Finally, in the directory of your plugin, get the latest type definitions for the plugin API by running:
+Then to build the whole system
 
-  npm install --save-dev @figma/plugin-typings
+  npm run build
 
 If you are familiar with JavaScript, TypeScript will look very familiar. In fact, valid JavaScript code
 is already valid Typescript code.
