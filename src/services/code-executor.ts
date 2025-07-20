@@ -8,6 +8,11 @@ import { ErrorHandler } from '../utils/error-handler';
 import { InputValidator } from '../utils/validators';
 import { LogEntry } from '../../shared/types/messages';
 import * as d3 from '../../node_modules/d3';
+//import d3-sankey
+import * as d3Sankey from 'd3-sankey';
+// Attach sankey to d3 so you can use d3.sankey syntax
+(d3 as any).sankey = d3Sankey.sankey;
+(d3 as any).sankeyLinkHorizontal = d3Sankey.sankeyLinkHorizontal;
 
 function getLineNumberFromStack(err: Error): number {
   var stack = err.stack?.toString().split(/\r\n|\n/);
@@ -285,7 +290,8 @@ export class CodeExecutor {
         getLineNumberFromStack,
         getUpperLineNumberFromStack,
         dynamicPrependCode,
-        d3
+        d3,
+        d3Sankey
       };
       const paramNames = Object.keys(context);
       const paramValues = Object.values(context);

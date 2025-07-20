@@ -51,7 +51,7 @@ class ExtractTypesPlugin {
               'd3-force', 'd3-format', 'd3-geo', 'd3-hierarchy', 'd3-interpolate',
               'd3-path', 'd3-polygon', 'd3-quadtree', 'd3-random', 'd3-scale',
               'd3-scale-chromatic', 'd3-selection', 'd3-shape', 'd3-time',
-              'd3-time-format', 'd3-timer', 'd3-transition', 'd3-zoom'
+              'd3-time-format', 'd3-timer', 'd3-transition', 'd3-zoom','d3-sankey'
             ];
             
             // Add the actual D3 sub-module types
