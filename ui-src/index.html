@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Figmata</title>
+</head>
+<body>
+    <div id="app">
+        <!-- Toolbar Section -->
+        <div id="toolbar" class="toolbar">
+            <div class="toolbar-section">
+                <button id="runButton" class="run-button" title="Run Code">
+                    <svg width="16" height="16" viewBox="0 0 16 16">
+                        <path d="M3.3335 2L12.6668 8L3.3335 14V2Z" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="toolbar-section">
+                <select id="frameDropdown" class="frame-dropdown">
+                    <option value="">Select Frame...</option>
+                </select>
+                <button id="lockButton" class="lock-button" title="Lock/Unlock Frame">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12.6667 7.33325H3.33333C2.59695 7.33325 2 7.93021 2 8.66659V13.3333C2 14.0696 2.59695 14.6666 3.33333 14.6666H12.6667C13.403 14.6666 14 14.0696 14 13.3333V8.66659C14 7.93021 13.403 7.33325 12.6667 7.33325Z" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4.6665 7.33325V4.66659C4.6665 3.78253 5.01769 2.93468 5.64281 2.30956C6.26794 1.68444 7.11578 1.33325 7.99984 1.33325C8.88389 1.33325 9.73174 1.68444 10.3569 2.30956C10.982 2.93468 11.3332 3.78253 11.3332 4.66659V7.33325" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                <button id="autoRefreshButton" class="auto-refresh-button" title="Toggle Auto-refresh">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M0.666504 2.66675V6.66675H4.6665" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M15.3335 13.3333V9.33325H11.3335" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M13.6598 6.00013C13.3217 5.04466 12.7471 4.1904 11.9895 3.51708C11.232 2.84375 10.3162 2.37331 9.32765 2.14964C8.3391 1.92597 7.31 1.95636 6.33638 2.23798C5.36275 2.5196 4.47634 3.04327 3.75984 3.76013L0.666504 6.6668M15.3332 9.33347L12.2398 12.2401C11.5233 12.957 10.6369 13.4807 9.6633 13.7623C8.68967 14.0439 7.66058 14.0743 6.67203 13.8506C5.68348 13.627 4.7677 13.1565 4.01015 12.4832C3.25259 11.8099 2.67795 10.9556 2.33984 10.0001" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+            </div>
+            
+            <div class="toolbar-section">
+                <div class="ai-prompt-container" style="display: none;">
+                    <input id="promptInput" type="text" placeholder="Describe what you want to create..." class="prompt-input">
+                    <button id="generateButton" class="generate-button" title="Generate Code from Prompt">
+                        <svg width="16" height="16" viewBox="0 0 16 16">
+                            <path d="M8 1V3" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 13V15" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.04999 3.05005L4.46499 4.46505" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M11.535 11.535L12.95 12.95" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M1 8H3" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13 8H15" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3.04999 12.95L4.46499 11.535" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M11.535 4.46505L12.95 3.05005" stroke="#1A1A1A" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            
+        </div>
+
+        <!-- Editor Section -->
+        <div id="editorContainer" class="editor-container">
+            <div id="editor" class="editor"></div>
+        </div>
+
+        <!-- Console Section -->
+        <div id="console" class="console">
+            <div class="console-header">
+                <span class="console-title">Console</span>
+                <button id="clearConsole" class="clear-console-button" title="Clear Console">
+                    <svg width="12" height="12" viewBox="0 0 12 12">
+                        <path d="M9 3L3 9M3 3L9 9" stroke="#666" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="consoleOutput" class="console-output"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.js"></script>
+</body>
+</html>

@@ -1,22 +1,25 @@
 {
-  "id": "bar-chart-sample",
-  "name": "Bar Chart Sample",
+  "name": "Figmata",
+  "id": "1471223047039079045",
   "api": "1.0.0",
-  "main": "code.js",
-  "ui": "ui.html",
-  "editorType": ["figma", "figjam"],
+  "main": "dist/code.js",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "documentAccess": "dynamic-page",
+  "editorType": [
+    "figma"
+  ],
+  "ui": "dist/ui.html",
   "networkAccess": {
     "allowedDomains": [
-      "https://static.figma.com/api/figma-extension-api-0.0.1.css",
-      "https://fonts.googleapis.com",
-      "https://fonts.gstatic.com"
-    ]
+      "https://cdnjs.cloudflare.com",
+      "http://localhost:1234"
+    ],
+    "reasoning": "This plugin can make use of LLM Studio on the localhost 1234"
   },
-  "documentAccess": "dynamic-page"
-  ,
-    "devDependencies": {
-      "@typescript-eslint/eslint-plugin": "^5.10.0",
-      "@typescript-eslint/parser": "^5.10.0",
-      "@figma/eslint-plugin-figma-plugins": "^1.0.0"
-    }
+  "relaunchButtons": [
+  {"command": "edit", "name": "Edit figmata"},
+  {"command": "reset", "name": "Reset code"}
+
+]
 }
