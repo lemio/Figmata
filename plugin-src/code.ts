@@ -200,10 +200,12 @@ figma.ui.onmessage = async (msg: any) => {
 
 async function handleRunCode(code: string) {
   let targetFrame;
+  let targetFrameId = null;
   
   if (lockedFrame) {
     // Use the locked frame
     targetFrame = lockedFrame;
+    targetFrameId = lockedFrame.id;
   } else {
     // Use the current selection
     const selection = figma.currentPage.selection[0];
@@ -216,6 +218,7 @@ async function handleRunCode(code: string) {
       return;
     }
     targetFrame = selection;
+    targetFrameId = selection.id;
   }
   
   targetFrame.setPluginData('code', code);
@@ -225,7 +228,7 @@ async function handleRunCode(code: string) {
   
   const debouncedFunction = debounce(() => {
       var errors = false;
-      // Create dynamic prependCode with the target frame
+      // Create dynamic prependCode with the target frame ID
       const dynamicPrependCode = `
       /*
     console.log = function(...args) {

@@ -151,33 +151,7 @@ function _setText(node, name, text){
     function delay(ms){
       return new Promise(resolve => setTimeout(resolve, ms));
     }
-      return (async () =>  {
-      let FigmaFrame = figma.currentPage.selection[0];
-    //let FigmaFrame = await figma.getNodeByIdAsync('targetFrame.id')
-    let FirstChild = FigmaFrame.children[0];
-    let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
-          const [family, style] = font.split('***');
-          console.log(family, style);
-          return { family, style }
-        })
-          console.log("Fonts", fonts)
-    try {
-      for (const font of fonts) {
-        await figma.loadFontAsync({ family: font.family, style: font.style });
-      }
-      console.log("Fonts loaded");
-    } catch (e) {
-      console.error("font error", e);
-    }
-      let originalChildren = FigmaFrame.children
-      if (typeof preProcess === 'function') {
-        preProcess();
-    }else{
-    
-    originalChildren.slice(1).forEach(child => {
-        child.remove();
-      });
-    }`
+      return (async () =>  {`
 export class CodeExecutor {
   private logger: Logger;
   private errorHandler: ErrorHandler;
@@ -187,7 +161,7 @@ export class CodeExecutor {
     this.errorHandler = new ErrorHandler();
   }
 
-  async executeCode(code: string): Promise<{ success: boolean; logs: LogEntry[]; error?: string }> {
+  async executeCode(code: string, frameId?: string): Promise<{ success: boolean; logs: LogEntry[]; error?: string }> {
     const logs: LogEntry[] = [];
     
     try {
@@ -200,7 +174,7 @@ export class CodeExecutor {
       const sanitizedCode = InputValidator.sanitizeCode(code);
       
       // Add execution context and logging
-      const wrappedCode = this.wrapCodeWithContext(sanitizedCode, logs);
+      const wrappedCode = this.wrapCodeWithContext(sanitizedCode, logs, frameId);
       
       this.logger.log('Executing code...');
       const startTime = Date.now();
@@ -244,10 +218,44 @@ export class CodeExecutor {
     }
   }
 
-  private wrapCodeWithContext(code: string, _logs: LogEntry[]): string {
-
+  private wrapCodeWithContext(code: string, _logs: LogEntry[], frameId?: string): string {
+    // Generate frame lookup code based on whether frameId is provided
+    const frameSetupCode = frameId 
+      ? `let FigmaFrame = await figma.getNodeByIdAsync('${frameId}');
+         if (!FigmaFrame || FigmaFrame.type !== 'FRAME') {
+           throw new Error('Selected frame not found or is not a valid frame');
+         }`
+      : `let FigmaFrame = figma.currentPage.selection[0];
+         if (!FigmaFrame || FigmaFrame.type !== 'FRAME') {
+           throw new Error('Please select a frame or lock to a specific frame');
+         }`;
 
     return `${dynamicPrependCode}
+      ${frameSetupCode}
+      let FirstChild = FigmaFrame.children[0];
+      let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
+            const [family, style] = font.split('***');
+            console.log(family, style);
+            return { family, style }
+          })
+            console.log("Fonts", fonts)
+      try {
+        for (const font of fonts) {
+          await figma.loadFontAsync({ family: font.family, style: font.style });
+        }
+        console.log("Fonts loaded");
+      } catch (e) {
+        console.error("font error", e);
+      }
+        let originalChildren = FigmaFrame.children
+        if (typeof preProcess === 'function') {
+          preProcess();
+      }else{
+      
+      originalChildren.slice(1).forEach(child => {
+          child.remove();
+        });
+      }
       ${code}
       if (typeof postProcess === 'function') {
       postProcess();

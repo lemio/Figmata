@@ -89,18 +89,26 @@ export class Toolbar {
   private handleFrameSelection(frameId: string): void {
     this.stateManager.setSelectedFrame(frameId);
     this.messageSender.selectFrame(frameId);
+    
+    // Update dropdown immediately to prevent showing "Select Frame..."
+    const dropdown = this.elements.frameDropdown;
+    if (dropdown && frameId) {
+      dropdown.value = frameId;
+    }
   }
 
   private handleToggleLock(): void {
-    const selectedFrameId = this.stateManager.getSelectedFrameId();
     const isCurrentlyLocked = this.stateManager.isFrameLocked();
+    const effectiveFrameId = this.stateManager.getEffectiveFrameId();
     
     if (isCurrentlyLocked) {
       // Unlock
+      this.stateManager.setLockState(false);
       this.messageSender.toggleLock();
-    } else if (selectedFrameId) {
-      // Lock to selected frame
-      this.messageSender.toggleLock(selectedFrameId);
+    } else if (effectiveFrameId) {
+      // Lock to currently effective frame (selected frame)
+      this.stateManager.setLockState(true, effectiveFrameId);
+      this.messageSender.toggleLock(effectiveFrameId);
     } else {
       console.warn('No frame selected to lock');
     }

@@ -60,6 +60,16 @@ export interface AutoRefreshStateUpdatedMessage extends BaseMessage {
   isEnabled: boolean;
 }
 
+export interface UpdateFrameListMessage extends BaseMessage {
+  type: 'updateFrameList';
+  frames: FrameInfo[];
+}
+
+export interface SetCurrentFrameMessage extends BaseMessage {
+  type: 'setCurrentFrame';
+  frame: FrameInfo;
+}
+
 export interface LogEntry {
   message: string;
   line?: number;
@@ -87,4 +97,6 @@ export type UIMessage =
   | PluginReadyMessage
   | LockStateUpdatedMessage
   | AutoRefreshStateUpdatedMessage
+  | UpdateFrameListMessage
+  | SetCurrentFrameMessage
   | LogEntry;

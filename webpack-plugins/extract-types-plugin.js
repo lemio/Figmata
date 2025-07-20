@@ -39,6 +39,7 @@ class ExtractTypesPlugin {
           if (fs.existsSync(d3TypesPath)) {
             // Read the main d3 types index
             const d3IndexPath = path.join(d3TypesPath, 'index.d.ts');
+            //d3Types += 'const d3 = (function() {\n'
             if (fs.existsSync(d3IndexPath)) {
               d3Types += fs.readFileSync(d3IndexPath, 'utf8') + '\n';
             }
@@ -71,6 +72,7 @@ class ExtractTypesPlugin {
                 }
               }
             });
+            //d3Types += '}());\n';
           }
 
           // Clean up the types to remove problematic patterns

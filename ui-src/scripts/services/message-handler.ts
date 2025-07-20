@@ -35,6 +35,14 @@ export class MessageHandler {
         this.handleAutoRefreshStateUpdated(message);
         break;
         
+      case 'updateFrameList':
+        this.handleUpdateFrameList(message);
+        break;
+        
+      case 'setCurrentFrame':
+        this.handleSetCurrentFrame(message);
+        break;
+        
       case 'log':
         this.handleLogMessage(message);
         break;
@@ -67,11 +75,6 @@ export class MessageHandler {
       });
     }
     
-    // Reset button state after a delay
-    setTimeout(() => {
-      this.stateManager.setExecutionState('normal');
-      this.uiUpdater.updateRunButton('normal');
-    }, 2000);
   }
 
   private handleFramesUpdated(message: any): void {
@@ -82,11 +85,51 @@ export class MessageHandler {
   private handleLockStateUpdated(message: any): void {
     this.stateManager.setLockState(message.isLocked, message.frameId);
     this.uiUpdater.updateLockButton(message.isLocked);
+    
+    // If locking to a frame, update the selected frame
+    if (message.isLocked && message.frameId) {
+      this.stateManager.setSelectedFrame(message.frameId);
+      
+      // Update dropdown to show the locked frame
+      const frameDropdown = document.getElementById('frameDropdown') as HTMLSelectElement;
+      if (frameDropdown) {
+        frameDropdown.value = message.frameId;
+      }
+    }
   }
 
   private handleAutoRefreshStateUpdated(message: any): void {
     this.stateManager.setAutoRefreshState(message.isEnabled);
     this.uiUpdater.updateAutoRefreshButton(message.isEnabled);
+  }
+
+  private handleUpdateFrameList(message: any): void {
+    this.stateManager.setFrames(message.frames);
+    this.uiUpdater.updateFrameDropdown(message.frames);
+  }
+
+  private handleSetCurrentFrame(message: any): void {
+    if (message.frame) {
+      // If we're locked, keep the selected frame as the locked frame
+      if (!this.stateManager.isFrameLocked()) {
+        this.stateManager.setSelectedFrame(message.frame.id);
+      }
+      
+      // Update the dropdown to show the effective frame (locked frame or selected frame)
+      const frameDropdown = document.getElementById('frameDropdown') as HTMLSelectElement;
+      if (frameDropdown) {
+        const effectiveFrameId = this.stateManager.isFrameLocked() 
+          ? this.stateManager.getState().lockedFrameId 
+          : message.frame.id;
+        
+        if (effectiveFrameId) {
+          frameDropdown.value = effectiveFrameId;
+        }
+      }
+      
+      // Load existing code for this frame if available
+      // This will be handled by requesting code from the plugin
+    }
   }
 
   private handleLogMessage(message: any): void {

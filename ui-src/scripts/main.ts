@@ -66,6 +66,13 @@ class UIController {
       this.uiUpdater.updateLockButton(state.isLocked);
       this.uiUpdater.updateAutoRefreshButton(state.autoRefreshEnabled);
       
+      // Update dropdown to show effective frame (locked or selected)
+      const effectiveFrameId = this.stateManager.getEffectiveFrameId();
+      const dropdown = document.getElementById('frameDropdown') as HTMLSelectElement;
+      if (dropdown && effectiveFrameId) {
+        dropdown.value = effectiveFrameId;
+      }
+      
       // Update editor if code changed externally
       if (this.editor.getValue() !== state.currentCode) {
         this.editor.setValue(state.currentCode);

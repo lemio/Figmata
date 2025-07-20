@@ -22,6 +22,7 @@ export class StateManager {
   };
 
   private listeners: Array<(state: UIState) => void> = [];
+  private lastExecutedCode: string = '';
 
   getState(): UIState {
     return { ...this.state };
@@ -53,6 +54,11 @@ export class StateManager {
 
   setCurrentCode(code: string): void {
     this.setState({ currentCode: code });
+    
+    // Reset execution state to normal if code has changed from last executed code
+    if (code !== this.lastExecutedCode && this.state.executionState !== 'normal') {
+      this.setState({ executionState: 'normal' });
+    }
   }
 
   getCurrentCode(): string {
@@ -88,9 +94,34 @@ export class StateManager {
 
   setExecutionState(state: 'normal' | 'running' | 'success' | 'error'): void {
     this.setState({ executionState: state });
+    
+    // Update last executed code when execution starts
+    if (state === 'running') {
+      this.lastExecutedCode = this.state.currentCode;
+    }
   }
 
   getExecutionState(): 'normal' | 'running' | 'success' | 'error' {
     return this.state.executionState;
+  }
+
+  getLastExecutedCode(): string {
+    return this.lastExecutedCode;
+  }
+
+  isCodeChangedSinceExecution(): boolean {
+    return this.state.currentCode !== this.lastExecutedCode;
+  }
+
+  getEffectiveFrameId(): string | null {
+    // Return locked frame ID if locked, otherwise return selected frame ID
+    if (this.state.isLocked && this.state.lockedFrameId) {
+      return this.state.lockedFrameId;
+    }
+    return this.state.selectedFrameId;
+  }
+
+  getLockedFrameId(): string | null {
+    return this.state.lockedFrameId;
   }
 }

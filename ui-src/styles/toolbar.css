@@ -110,6 +110,28 @@
     color: white;
 }
 
+.run-button.changed {
+    position: relative;
+    border: 2px solid #ffa500;
+    background: #0066cc;
+}
+
+.run-button.changed::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #ffa500;
+    border-radius: 50%;
+    border: 1px solid white;
+}
+
+.run-button.changed:hover {
+    background: #0052a3;
+}
+
 .run-button svg {
     animation: none;
 }

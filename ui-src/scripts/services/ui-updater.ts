@@ -12,6 +12,8 @@ export class UIUpdater {
     const dropdown = document.getElementById('frameDropdown') as HTMLSelectElement;
     if (!dropdown) return;
 
+    const currentValue = dropdown.value;
+    
     // Clear existing options except the first one
     dropdown.innerHTML = '<option value="">Select Frame...</option>';
 
@@ -21,6 +23,17 @@ export class UIUpdater {
       option.textContent = `${frame.name}${frame.hasCode ? ' ✓' : ''}`;
       dropdown.appendChild(option);
     });
+    
+    // Restore previous selection if it still exists
+    if (currentValue && frames.some(frame => frame.id === currentValue)) {
+      dropdown.value = currentValue;
+    }
+    
+    // If we have a selected frame in state but dropdown shows "Select Frame...", update it
+    const selectedFrameId = this.stateManager.getSelectedFrameId();
+    if (selectedFrameId && frames.some(frame => frame.id === selectedFrameId)) {
+      dropdown.value = selectedFrameId;
+    }
   }
 
   updateEditor(code: string): void {
@@ -36,11 +49,17 @@ export class UIUpdater {
     if (!button) return;
 
     // Remove all state classes
-    button.classList.remove('running', 'success', 'error');
+    button.classList.remove('running', 'success', 'error', 'changed');
     
     // Add current state class
     if (state !== 'normal') {
       button.classList.add(state);
+    }
+
+    // Check if code has changed since last execution
+    const isCodeChanged = this.stateManager.isCodeChangedSinceExecution();
+    if (isCodeChanged && state !== 'running') {
+      button.classList.add('changed');
     }
 
     // Update button text and state
@@ -52,11 +71,11 @@ export class UIUpdater {
           button.disabled = true;
           break;
         case 'success':
-          span.textContent = 'Success!';
+          span.textContent = isCodeChanged ? 'Run' : 'Success!';
           button.disabled = false;
           break;
         case 'error':
-          span.textContent = 'Error';
+          span.textContent = isCodeChanged ? 'Run' : 'Error';
           button.disabled = false;
           break;
         default:

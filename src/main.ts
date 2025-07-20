@@ -47,6 +47,7 @@ class PluginController {
   private async sendInitialData(): Promise<void> {
     const frames = this.frameManager.getAvailableFrames();
     const initialCode = this.figmaManager.generateTemplateCode();
+    const currentFrame = this.frameManager.getCurrentFrame();
     
     this.sendToUI({
       type: MESSAGE_TYPES.PLUGIN_READY,
@@ -54,6 +55,26 @@ class PluginController {
       initialCode,
       timestamp: Date.now()
     });
+
+    // Send frame list
+    this.sendToUI({
+      type: 'updateFrameList',
+      frames,
+      timestamp: Date.now()
+    } as any);
+
+    // Send current frame if one is selected
+    if (currentFrame && !this.frameManager.isFrameLocked()) {
+      this.sendToUI({
+        type: 'setCurrentFrame',
+        frame: {
+          id: currentFrame.id,
+          name: currentFrame.name,
+          hasCode: currentFrame.getPluginData('code') !== ''
+        },
+        timestamp: Date.now()
+      } as any);
+    }
   }
 
   private async handleMessage(message: PluginMessage): Promise<void> {
@@ -95,7 +116,20 @@ class PluginController {
   }
 
   private async executeCode(code: string): Promise<void> {
-    const result = await this.codeExecutor.executeCode(code);
+    // Get the target frame (locked frame or current selection)
+    const targetFrame = this.frameManager.getCurrentFrame();
+    
+    if (!targetFrame) {
+      this.sendToUI({
+        type: MESSAGE_TYPES.EXECUTION_RESULT,
+        success: false,
+        error: 'Please select a frame or lock to a specific frame',
+        timestamp: Date.now()
+      });
+      return;
+    }
+
+    const result = await this.codeExecutor.executeCode(code, targetFrame.id);
     
     this.sendToUI({
       type: MESSAGE_TYPES.EXECUTION_RESULT,
@@ -107,17 +141,43 @@ class PluginController {
 
     // Save code to current frame if execution was successful
     if (result.success) {
-      const currentFrame = this.frameManager.getCurrentFrame();
-      if (currentFrame) {
-        await this.frameManager.setFrameCode(currentFrame.id, code);
-      }
+      await this.frameManager.setFrameCode(targetFrame.id, code);
     }
   }
 
   private async selectFrame(frameId: string): Promise<void> {
     const frame = await this.frameManager.selectFrame(frameId);
     if (frame) {
+      // If we're locked to a different frame, don't load code from the selected frame
+      if (this.frameManager.isFrameLocked()) {
+        const lockedFrame = this.frameManager.getLockedFrame();
+        if (lockedFrame && lockedFrame.id !== frameId) {
+          // Just notify UI about the selection but don't load code
+          this.sendToUI({
+            type: 'setCurrentFrame',
+            frame: {
+              id: lockedFrame.id,
+              name: lockedFrame.name,
+              hasCode: lockedFrame.getPluginData('code') !== ''
+            },
+            timestamp: Date.now()
+          } as any);
+          return;
+        }
+      }
+
       const code = await this.frameManager.getFrameCode(frameId);
+      
+      // Notify UI about the selected frame
+      this.sendToUI({
+        type: 'setCurrentFrame',
+        frame: {
+          id: frame.id,
+          name: frame.name,
+          hasCode: code !== ''
+        },
+        timestamp: Date.now()
+      } as any);
       
       // Send the code back to UI if frame has saved code
       if (code) {
@@ -156,17 +216,53 @@ class PluginController {
       frames,
       timestamp: Date.now()
     });
+
+    // Also send the updateFrameList message for compatibility
+    this.sendToUI({
+      type: 'updateFrameList',
+      frames,
+      timestamp: Date.now()
+    } as any);
   }
 
   private async toggleLock(frameId?: string): Promise<void> {
+    const wasLocked = this.frameManager.isFrameLocked();
     await this.frameManager.lockFrame(frameId);
+    const isNowLocked = this.frameManager.isFrameLocked();
     
     this.sendToUI({
       type: MESSAGE_TYPES.LOCK_STATE_UPDATED,
-      isLocked: this.frameManager.isFrameLocked(),
+      isLocked: isNowLocked,
       frameId: frameId,
       timestamp: Date.now()
     });
+
+    // If we just locked to a frame, notify UI about the locked frame
+    if (!wasLocked && isNowLocked && frameId) {
+      const lockedFrame = this.frameManager.getLockedFrame();
+      if (lockedFrame) {
+        this.sendToUI({
+          type: 'setCurrentFrame',
+          frame: {
+            id: lockedFrame.id,
+            name: lockedFrame.name,
+            hasCode: lockedFrame.getPluginData('code') !== ''
+          },
+          timestamp: Date.now()
+        } as any);
+
+        // Load code for the locked frame
+        const code = await this.frameManager.getFrameCode(lockedFrame.id);
+        if (code) {
+          this.sendToUI({
+            type: MESSAGE_TYPES.PLUGIN_READY,
+            frames: this.frameManager.getAvailableFrames(),
+            initialCode: code,
+            timestamp: Date.now()
+          });
+        }
+      }
+    }
   }
 
   private toggleAutoRefresh(): void {
@@ -196,8 +292,35 @@ class PluginController {
   }
 
   private async handleSelectionChange(): Promise<void> {
-    if (this.autoRefreshEnabled) {
-      await this.sendInitialData();
+    // Don't update if frame is locked
+    if (this.frameManager.isFrameLocked()) {
+      return;
+    }
+
+    const currentFrame = this.frameManager.getCurrentFrame();
+    
+    if (currentFrame) {
+      // Send frame selection update to UI
+      this.sendToUI({
+        type: 'setCurrentFrame',
+        frame: {
+          id: currentFrame.id,
+          name: currentFrame.name,
+          hasCode: currentFrame.getPluginData('code') !== ''
+        },
+        timestamp: Date.now()
+      } as any);
+      
+      // Load existing code for this frame
+      const code = await this.frameManager.getFrameCode(currentFrame.id);
+      if (code && this.autoRefreshEnabled) {
+        this.sendToUI({
+          type: MESSAGE_TYPES.PLUGIN_READY,
+          frames: this.frameManager.getAvailableFrames(),
+          initialCode: code,
+          timestamp: Date.now()
+        });
+      }
     }
     
     // Update frames list
