@@ -4,8 +4,10 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     background: white;
-    font-size: 12px;
+    font-size: 14px;
     color: #333;
+    height: 32px;
+    width:max-content;
 }
 
 .frame-dropdown:focus {
@@ -23,6 +25,9 @@
 .lock-button.locked {
     background: #0066cc;
     color: white;
+}
+.lock-button.locked svg path {
+    stroke: white;
 }
 
 .lock-button.locked:hover {
@@ -112,8 +117,8 @@
 
 .run-button.changed {
     position: relative;
-    border: 2px solid #ffa500;
-    background: #0066cc;
+    /*border: 2px solid #ffa500;*/
+    background: #ffa500;
 }
 
 .run-button.changed::after {

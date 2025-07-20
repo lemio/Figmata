@@ -23,7 +23,7 @@ body {
     border-bottom: 1px solid #e1e5e9;
     padding: 8px 12px;
     display: flex;
-    justify-content: space-between;
+    /*justify-content: space-between;*/
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
