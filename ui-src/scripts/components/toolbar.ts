@@ -8,12 +8,11 @@ export class Toolbar {
   private uiUpdater: UIUpdater;
   private elements!: {
     runButton: HTMLButtonElement;
+    barChartButton: HTMLButtonElement;
     frameDropdown: HTMLSelectElement;
     lockButton: HTMLButtonElement;
-    autoRefreshButton: HTMLButtonElement;
+    autoRefreshCheckbox: HTMLInputElement;
     promptInput: HTMLInputElement;
-    generateButton: HTMLButtonElement;
-    clearConsole: HTMLButtonElement;
   };
 
   constructor(stateManager: StateManager, messageSender: MessageSender, uiUpdater: UIUpdater) {
@@ -27,55 +26,59 @@ export class Toolbar {
   private initializeElements(): void {
     this.elements = {
       runButton: document.getElementById('runButton') as HTMLButtonElement,
+      barChartButton: document.getElementById('barChartButton') as HTMLButtonElement,
       frameDropdown: document.getElementById('frameDropdown') as HTMLSelectElement,
       lockButton: document.getElementById('lockButton') as HTMLButtonElement,
-      autoRefreshButton: document.getElementById('autoRefreshButton') as HTMLButtonElement,
-      promptInput: document.getElementById('promptInput') as HTMLInputElement,
-      generateButton: document.getElementById('generateButton') as HTMLButtonElement,
-      clearConsole: document.getElementById('clearConsole') as HTMLButtonElement
+      autoRefreshCheckbox: document.getElementById('autoRefreshCheckbox') as HTMLInputElement,
+      promptInput: document.getElementById('promptInput') as HTMLInputElement
     };
+
+    // Check for missing elements
+    for (const [key, element] of Object.entries(this.elements)) {
+      if (!element) {
+        console.error(`Toolbar element not found: ${key}`);
+      }
+    }
   }
 
   private setupEventListeners(): void {
     // Run button
-    this.elements.runButton.addEventListener('click', () => {
-      this.handleRunCode();
-    });
+    if (this.elements.runButton) {
+      this.elements.runButton.addEventListener('click', () => {
+        this.handleRunCode();
+      });
+    }
+
+    // Bar Chart example button
+    if (this.elements.barChartButton) {
+      this.elements.barChartButton.addEventListener('click', () => {
+        this.handleRunBarChart();
+      });
+    }
 
     // Frame dropdown
-    this.elements.frameDropdown.addEventListener('change', (e) => {
-      const frameId = (e.target as HTMLSelectElement).value;
-      if (frameId) {
-        this.handleFrameSelection(frameId);
-      }
-    });
+    if (this.elements.frameDropdown) {
+      this.elements.frameDropdown.addEventListener('change', (e) => {
+        const frameId = (e.target as HTMLSelectElement).value;
+        if (frameId) {
+          this.handleFrameSelection(frameId);
+        }
+      });
+    }
 
     // Lock button
-    this.elements.lockButton.addEventListener('click', () => {
-      this.handleToggleLock();
-    });
+    if (this.elements.lockButton) {
+      this.elements.lockButton.addEventListener('click', () => {
+        this.handleToggleLock();
+      });
+    }
 
-    // Auto-refresh button
-    this.elements.autoRefreshButton.addEventListener('click', () => {
-      this.handleToggleAutoRefresh();
-    });
-
-    // Generate button
-    this.elements.generateButton.addEventListener('click', () => {
-      this.handleGenerateCode();
-    });
-
-    // Prompt input - enter key
-    this.elements.promptInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        this.handleGenerateCode();
-      }
-    });
-
-    // Clear console button
-    this.elements.clearConsole.addEventListener('click', () => {
-      this.handleClearConsole();
-    });
+    // Auto-refresh checkbox
+    if (this.elements.autoRefreshCheckbox) {
+      this.elements.autoRefreshCheckbox.addEventListener('change', () => {
+        this.handleToggleAutoRefresh();
+      });
+    }
   }
 
   private handleRunCode(): void {
@@ -90,6 +93,11 @@ export class Toolbar {
     
     this.stateManager.setExecutionState('running');
     this.messageSender.runCode(code);
+  }
+
+  private handleRunBarChart(): void {
+    console.log('Running bar chart example...');
+    this.messageSender.runExample('barChart');
   }
 
   private handleFrameSelection(frameId: string): void {
@@ -131,23 +139,5 @@ export class Toolbar {
     this.messageSender.toggleAutoRefresh();
     
     console.log(`Auto-refresh ${newState ? 'enabled' : 'disabled'}`);
-  }
-
-  private handleGenerateCode(): void {
-    const prompt = this.elements.promptInput.value.trim();
-    if (!prompt) {
-      console.warn('No prompt provided');
-      return;
-    }
-
-    this.messageSender.sendAIPrompt(prompt);
-    this.elements.promptInput.value = ''; // Clear input after sending
-  }
-
-  private handleClearConsole(): void {
-    const consoleOutput = document.getElementById('consoleOutput');
-    if (consoleOutput) {
-      consoleOutput.innerHTML = '';
-    }
   }
 }

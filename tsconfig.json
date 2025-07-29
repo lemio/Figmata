@@ -1,14 +1,17 @@
 {
   "compilerOptions": {
+    "noEmit": false,
     "target": "es2017",
-    "lib": ["es2017", "dom"],
+    "lib": ["es2017","DOM"],
     "strict": false,
     "typeRoots": [
       "./node_modules/@types",
-      "./node_modules/@figma"
+      "./node_modules/@figma",
     ],
     "outDir": "./dist",
     "jsx": "react",
+    "jsxFactory": "figma.widget.h",
+    "jsxFragmentFactory": "figma.widget.Fragment",
     "allowJs": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
@@ -22,6 +25,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.tsx",
     "ui-src/**/*.ts", 
     "shared/**/*.ts",
     "./node_modules/@figma/**/*.d.ts"

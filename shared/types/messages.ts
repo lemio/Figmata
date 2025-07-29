@@ -31,6 +31,11 @@ export interface ToggleAutoRefreshMessage extends BaseMessage {
   type: 'TOGGLE_AUTO_REFRESH';
 }
 
+export interface RunExampleMessage extends BaseMessage {
+  type: 'RUN_EXAMPLE';
+  exampleName: string;
+}
+
 export interface ExecutionResultMessage extends BaseMessage {
   type: 'EXECUTION_RESULT';
   success: boolean;
@@ -90,7 +95,8 @@ export type PluginMessage =
   | AIPromptMessage
   | GetFramesMessage
   | ToggleLockMessage
-  | ToggleAutoRefreshMessage;
+  | ToggleAutoRefreshMessage
+  | RunExampleMessage;
 
 export type UIMessage = 
   | ExecutionResultMessage 

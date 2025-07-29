@@ -50,4 +50,12 @@ export class MessageSender {
       timestamp: Date.now()
     });
   }
+
+  runExample(exampleName: string): void {
+    this.sendToPlugin({
+      type: 'RUN_EXAMPLE',
+      exampleName,
+      timestamp: Date.now()
+    });
+  }
 }

@@ -6,6 +6,7 @@ import { Logger } from './utils/logger';
 import { ErrorHandler } from './utils/error-handler';
 import { PluginMessage, UIMessage } from '../shared/types/messages';
 import { MESSAGE_TYPES } from '../shared/constants/message-types';
+import * as Examples from './Examples';
 
 class PluginController {
   private figmaManager: FigmaManager;
@@ -106,6 +107,10 @@ class PluginController {
           this.toggleAutoRefresh();
           break;
           
+        case MESSAGE_TYPES.RUN_EXAMPLE:
+          await this.runExample(message.exampleName);
+          break;
+          
         default:
           this.logger.warn('Unknown message type received');
       }
@@ -142,6 +147,46 @@ class PluginController {
     // Save code to current frame if execution was successful
     if (result.success) {
       await this.frameManager.setFrameCode(targetFrame.id, code);
+    }
+  }
+
+  private async runExample(exampleName: string): Promise<void> {
+    try {
+      this.logger.log(`Running example: ${exampleName}`);
+      
+      // Check if the example function exists
+      if (!(exampleName in Examples)) {
+        this.sendToUI({
+          type: MESSAGE_TYPES.EXECUTION_RESULT,
+          success: false,
+          error: `Example '${exampleName}' not found`,
+          timestamp: Date.now()
+        });
+        return;
+      }
+
+      // Execute the example function
+      const exampleFunction = (Examples as Record<string, () => Promise<void>>)[exampleName];
+      await exampleFunction();
+      
+      this.sendToUI({
+        type: MESSAGE_TYPES.EXECUTION_RESULT,
+        success: true,
+        logs: [{
+          message: `Example '${exampleName}' executed successfully`,
+          type: 'success',
+          timestamp: Date.now()
+        }],
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      this.errorHandler.handleGeneralError(error as Error, `example execution: ${exampleName}`);
+      this.sendToUI({
+        type: MESSAGE_TYPES.EXECUTION_RESULT,
+        success: false,
+        error: `Error running example '${exampleName}': ${(error as Error).message}`,
+        timestamp: Date.now()
+      });
     }
   }
 

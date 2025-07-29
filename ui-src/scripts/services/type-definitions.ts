@@ -375,9 +375,9 @@ declare const sampleData: {
 
   static getAllTypeDefinitions(): string {
     return [
-      this.getFigmaTypes(),
       this.getD3Types(), 
-      this.getFigmataCustomTypes()
+      this.getFigmataCustomTypes(),
+      this.getFigmaTypes(),
     ].join('\n\n');
   }
 }
