@@ -11,8 +11,11 @@ import * as d3 from '../../node_modules/d3';
 //import d3-sankey
 import * as d3Sankey from 'd3-sankey';
 // Attach sankey to d3 so you can use d3.sankey syntax
-(d3 as any).sankey = d3Sankey.sankey;
-(d3 as any).sankeyLinkHorizontal = d3Sankey.sankeyLinkHorizontal;
+// Map all exported members of d3Sankey to d3 under their own names
+Object.keys(d3Sankey).forEach(key => {
+  (d3 as any)[key] = (d3Sankey as any)[key];
+});
+
 
 function getLineNumberFromStack(err: Error): number {
   var stack = err.stack?.toString().split(/\r\n|\n/);
