@@ -260,22 +260,37 @@ declare module 'd3' {
 
   static getFigmataCustomTypes(): string {
     return `
+interface BaseNodeMixin extends PluginDataMixin, DevResourcesMixin {
+  readonly id: string
+  readonly parent: (BaseNode & ChildrenMixin) | null
+  name: string
+  readonly removed: boolean
+  toString(): string
+  remove(): void
+  setRelaunchData(data: { [command: string]: string }): void
+  getRelaunchData(): {
+    [command: string]: string
+  }
+  readonly isAsset: boolean
+  getCSSAsync(): Promise<{
+    [key: string]: string
+  }>
+  child(name: string): SceneNode | null;
+  setText(text: string): void;
+  setFill(color: string, opacity?: number): void;
+  setStroke(color: string, width?: number): void;
+  setVector(vector: string): void;
+  clone(): SceneNode;
+}
+
 // Figmata Custom Types and Helper Functions
 declare global {
   // Global variables available in code execution context
   const FigmaFrame: FrameNode;
   const FirstChild: SceneNode;
-
+  let element: SceneNode;
   // Helper functions available in code execution context
-  function _setText(element: SceneNode, childName: string, text: string): void;
-  function _resize(element: SceneNode, width: number, height: number): void;
-  function _setFill(element: SceneNode, color: { r: number; g: number; b: number }): void;
-  function _setStroke(element: SceneNode, color: { r: number; g: number; b: number }, width?: number): void;
-  function _position(element: SceneNode, x: number, y: number): void;
-  function _rotate(element: SceneNode, degrees: number): void;
-  function _scale(element: SceneNode, factor: number): void;
-  function _opacity(element: SceneNode, value: number): void;
-
+  
   // Extended console for better logging
   interface Console {
     log(...data: any[]): void;
