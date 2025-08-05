@@ -8,6 +8,7 @@ import { ErrorHandler } from '../utils/error-handler';
 import { InputValidator } from '../utils/validators';
 import { LogEntry } from '../../shared/types/messages';
 import * as d3 from '../../node_modules/d3';
+import {convertArcsToCubics} from '../utils/SVGUtils';
 //import d3-sankey
 import * as d3Sankey from 'd3-sankey';
 // Attach sankey to d3 so you can use d3.sankey syntax
@@ -71,6 +72,186 @@ return 0;
 
     const dynamicPrependCode = `
 
+    function dataTableToObject(DATA_TABLE_NAME) {
+    const dataTable = figma.currentPage.findChild(x => x.name === DATA_TABLE_NAME);
+    if (!dataTable) {
+      console.error(\`Table "\${DATA_TABLE_NAME}" not found on current page\`);
+      throw new Error(\`Table "\${DATA_TABLE_NAME}" not found\`);
+    }
+  if (dataTable.type !== 'TABLE') return false;
+  
+  const keys = [];
+  for (let x = 0; x < dataTable.numColumns; x++) {
+    keys.push(dataTable.cellAt(0, x).text.characters.trim());
+  }
+  
+  const rows = [];
+  for (let y = 1; y < dataTable.numRows; y++) {
+    const row = {};
+    for (let x = 0; x < dataTable.numColumns; x++) {
+      row[keys[x]] = dataTable.cellAt(y, x).text.characters.trim();
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+function enhanceFigmaAPI() {
+  // Define the methods to add
+  const strokeMethod = function(color, opacity = 1, weight = 1) {
+    this.strokeWeight = weight;
+    this.strokes = [{
+      "type": "SOLID",
+      "visible": true,
+      "opacity": opacity,
+      "blendMode": "NORMAL",
+      "color": figma.util.rgb(color),
+      "boundVariables": {}
+    }];
+    return this;
+  };
+  
+  const fillMethod = function(color, opacity = 1) {
+    this.fills = [{
+      "type": "SOLID",
+      "visible": true,
+      "opacity": opacity,
+      "blendMode": "NORMAL",
+      "color": figma.util.rgb(color),
+      "boundVariables": {}
+    }];
+    return this;
+  };
+
+  const child = function(name) {
+    if (!this.children) {
+      return null;
+        }
+    return this.findChild(child => child.name === name) || null;
+};
+
+  const setVector = function(vector) {
+    if (this.type !== 'VECTOR') {
+      throw new Error('setVector can only be called on VECTOR nodes');
+    }
+    this.vectorPaths = [{"windingRule": "NONE", "data": convertArcsToCubics(vector.replaceAll("M","M ").replaceAll(","," ").replaceAll("L"," L ").replaceAll("C"," C ").replaceAll("A"," A "))}];
+  };
+
+  const setText = function(text) {
+  if (this.type !== 'TEXT') {
+    const textNode = this.findChild(child => child.type === 'TEXT');
+    if (textNode) {
+      textNode.characters = String(text);
+    }
+  } else {
+    this.characters = String(text);
+  }
+};
+
+const setSize = function(width, height) {
+// Ensure minimum size constraints
+  const minSize = 0.01;
+  const safeWidth = Math.max(width, minSize);
+  const safeHeight = Math.max(height, minSize);
+  
+  // Handle constraint-based positioning
+  if (this.constraints) {
+    const oldBounds = this.absoluteBoundingBox;
+
+    if (oldBounds) {
+      if (this.constraints.horizontal === "MAX") {
+        const widthDiff = safeWidth - oldBounds.width;
+        this.x = this.x - widthDiff;
+      }
+
+      if (this.constraints.vertical === "MAX") {
+        const heightDiff = safeHeight - oldBounds.height;
+        this.y = this.y - heightDiff;
+      }
+    }
+  }
+  this.resize(safeWidth, safeHeight);
+};
+  // Get prototypes from different node types and enhance them all
+  const nodeCreators = [
+    () => figma.createFrame(),
+    () => figma.createRectangle(), 
+    () => figma.createEllipse(),
+    () => figma.createVector(),
+    () => figma.createText(),
+    () => figma.createLine(),
+    () => figma.createPolygon(),
+    () => figma.createStar(),
+    () => figma.createComponent().createInstance()
+  ];
+  
+  const prototypesEnhanced = new Set();
+  
+  nodeCreators.forEach(creator => {
+    try {
+      const tempNode = creator();
+      const prototype = Object.getPrototypeOf(tempNode);
+      
+      // Only enhance each unique prototype once
+      if (!prototypesEnhanced.has(prototype)) {
+        if (!prototype.setStroke) {
+          Object.defineProperty(prototype, 'setStroke', {
+            value: strokeMethod,
+            writable: false,
+            enumerable: false
+          });
+        }
+        
+        if (!prototype.setFill) {
+          Object.defineProperty(prototype, 'setFill', {
+            value: fillMethod,
+            writable: false,
+            enumerable: false
+          });
+        }
+
+        if (!prototype.setVector) {
+          Object.defineProperty(prototype, 'setVector', {
+            value: setVector,
+            writable: false,
+            enumerable: false
+          });
+        }
+        if (!prototype.child) {
+          Object.defineProperty(prototype, 'child', {
+            value: child,
+            writable: false,
+            enumerable: false
+          });
+        }
+        if (!prototype.setText) {
+          Object.defineProperty(prototype, 'setText', {
+            value: setText,
+            writable: false,
+            enumerable: false
+          });
+        }
+        if (!prototype.setSize) {
+          Object.defineProperty(prototype, 'setSize', {
+            value: setSize,
+            writable: false,
+            enumerable: false
+          });
+        }
+
+        prototypesEnhanced.add(prototype);
+      }
+      
+      tempNode.remove();
+    } catch (e) {
+      // Some node types might not be available in all contexts
+      console.log('Could not enhance:', creator.name);
+    }
+  });
+  
+}
+
+// Initialize API enhancements
+enhanceFigmaAPI();
 /**
  * Resizes a Figma node to the specified width and height while ensuring minimum size constraints
  * and handling constraint-based positioning adjustments.
@@ -294,7 +475,8 @@ export class CodeExecutor {
         getUpperLineNumberFromStack,
         dynamicPrependCode,
         d3,
-        d3Sankey
+        d3Sankey,
+        convertArcsToCubics
       };
       const paramNames = Object.keys(context);
       const paramValues = Object.values(context);

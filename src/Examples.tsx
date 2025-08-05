@@ -1,60 +1,27 @@
 
 const {AutoLayout, Frame, Text} = figma.widget;
 export async function barChart() {
-    function BarChartElement(
-  props: Partial<FrameProps>
-) {
-  return (
-    <Frame
-      name="FigmaElementBar"
-      fill="#F00"
-      overflow="visible"
-      width={653}
+    let InstanceOfElement = null;
+    const existingElement = figma.currentPage.findOne(node => node.name === 'FigmaElementBar');
+    if (existingElement) {
+      figma.notify('Element already exists, so this will be used instead of creating a new one.');
+      InstanceOfElement = existingElement;
+      //console.log('Element found:', InstanceOfElement());
+    } else {
+      const element = await figma.createNodeFromJSXAsync(<Frame
+        name="FigmaElementBar"
+        fill="#F00"
+        overflow="visible"
+        width={653}
       height={17}
-      {...props}
     >
-      <Text
-        name="Name"
-        x={-639}
-        y={{
-          type: "top-bottom",
-          topOffset: 0,
-          bottomOffset: 1,
-        }}
-        fill="#000"
-        width={632}
-        height={16}
-        verticalAlignText="center"
-        horizontalAlignText="right"
-        fontFamily="Inter"
-        fontSize={12}
-      >
-        CatName
-      </Text>
-      <Text
-        name="Value"
-        x={{
-          type: "right",
-          offset: -98,
-        }}
-        y={{
-          type: "top-bottom",
-          topOffset: 0,
-          bottomOffset: 1,
-        }}
-        fill="#000"
-        width={91}
-        height={16}
-        verticalAlignText="center"
-        fontFamily="Inter"
-        fontSize={12}
-      >
-        Value
-      </Text>
-    </Frame>
-  
-    )
-}
+    </Frame>);
+    console.log('Element created:', element);
+    figma.currentPage.appendChild(element);
+    InstanceOfElement = figma.createComponentFromNode(element);
+    figma.currentPage.appendChild(InstanceOfElement);
+      }
+      
 
 const node = await figma.createNodeFromJSXAsync(
  <AutoLayout
@@ -70,9 +37,14 @@ const node = await figma.createNodeFromJSXAsync(
       }}
       width={810}
     >
-      <BarChartElement></BarChartElement>
+      
     </AutoLayout>
-)
+);
+
+// Ensure node is a FrameNode or AutoLayoutNode before appending children
+if ("appendChild" in node && typeof node.appendChild === "function") {
+  node.appendChild(InstanceOfElement.clone());
+}
 
 figma.currentPage.appendChild(node);
 figma.currentPage.selection = [node];
