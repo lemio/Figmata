@@ -38,10 +38,22 @@ export class FigmaManager {
       elements.forEach((child: SceneNode) => {
         switch (child.type) {
           case 'TEXT':
-            childrenString += `\t_setText(element,"${child.name}", "${(child as TextNode).characters}")\n`;
+            childrenString += `\telement.child("${child.name}").setText("${(child as TextNode).characters}")`;
             break;
+          case 'RECTANGLE':
+            // eslint-disable-next-line no-case-declarations
+            const fill = (child as RectangleNode).fills[0];
+            // eslint-disable-next-line no-case-declarations
+            const { r, g, b } = fill.color;
+            // eslint-disable-next-line no-case-declarations
+            const hex = `#${((1 << 24) + (Math.round(r * 255) << 16) + (Math.round(g * 255) << 8) + Math.round(b * 255)).toString(16).slice(1)}`;
+            childrenString += `\telement.child("${child.name}").setFill("${hex}", ${fill.opacity})`;
+          break;
+          case 'VECTOR':
+            childrenString += `\telement.child("${child.name}").setVector("${(child as VectorNode).vectorPaths[0]}")`;
+          break;
           default:
-            childrenString += `\t//element.findChild(x => x.name === '${child.name}')\n`;
+            childrenString += `\t//element.child('${child.name}')`;
         }
         childrenString += '\n';
       });
@@ -61,9 +73,9 @@ let data = [
   ]
 data.forEach((row) => {
 \tlet element = FirstChild.clone(); //${firstElement.name}
-\t_resize(element,${width},${height})
+\telement.setSize(${width}, ${height});
 ${childrenString}
-FigmaFrame.appendChild(element)
+\tFigmaFrame.appendChild(element)
 })
 `;
   }

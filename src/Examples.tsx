@@ -63,9 +63,9 @@ let data = [
 ];
 data.forEach((item, index) => {
     let element = FirstChild.clone(); //FigmaElementBar
-	_resize(element,item.value,17)
-	_setText(element,"Value", item.value.toString())
-	_setText(element,"Name", item.name)
+    element.setSize(item.value,17)
+    element.child("Value").setText(item.value)
+    element.child("Name").setText(item.name)
     FigmaFrame.appendChild(element)
 })`);
 figma.viewport.scrollAndZoomIntoView([node]);

@@ -280,6 +280,13 @@ interface BaseNodeMixin extends PluginDataMixin, DevResourcesMixin {
   setFill(color: string, opacity?: number): void;
   setStroke(color: string, width?: number): void;
   setVector(vector: string): void;
+  /*
+  * Sets the size of the node and resized based on the current layout constraints.
+  * @param width - The width to set
+  * @param height - The height to set
+  * @returns void
+  */
+  setSize(width: number, height: number): void;
   clone(): SceneNode;
 }
 

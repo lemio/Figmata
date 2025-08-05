@@ -172,7 +172,9 @@ const setSize = function(width, height) {
   this.resize(safeWidth, safeHeight);
 };
   // Get prototypes from different node types and enhance them all
+  component = figma.createComponent();
   const nodeCreators = [
+    () => component.createInstance(),
     () => figma.createFrame(),
     () => figma.createRectangle(), 
     () => figma.createEllipse(),
@@ -180,13 +182,12 @@ const setSize = function(width, height) {
     () => figma.createText(),
     () => figma.createLine(),
     () => figma.createPolygon(),
-    () => figma.createStar(),
-    () => figma.createComponent().createInstance()
+    () => figma.createStar()
   ];
   
   const prototypesEnhanced = new Set();
   
-  nodeCreators.forEach(creator => {
+  nodeCreators.forEach((creator,i) => {
     try {
       const tempNode = creator();
       const prototype = Object.getPrototypeOf(tempNode);
@@ -240,14 +241,14 @@ const setSize = function(width, height) {
 
         prototypesEnhanced.add(prototype);
       }
-      
       tempNode.remove();
     } catch (e) {
       // Some node types might not be available in all contexts
       console.log('Could not enhance:', creator.name);
     }
+      
   });
-  
+  component.remove();
 }
 
 // Initialize API enhancements
