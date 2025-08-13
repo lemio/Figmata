@@ -11,7 +11,7 @@ export class Toolbar {
     barChartButton: HTMLButtonElement;
     frameDropdown: HTMLSelectElement;
     lockButton: HTMLButtonElement;
-    autoRefreshCheckbox: HTMLInputElement;
+    autoRefreshButton: HTMLButtonElement;
     promptInput: HTMLInputElement;
   };
 
@@ -29,7 +29,7 @@ export class Toolbar {
       barChartButton: document.getElementById('barChartButton') as HTMLButtonElement,
       frameDropdown: document.getElementById('frameDropdown') as HTMLSelectElement,
       lockButton: document.getElementById('lockButton') as HTMLButtonElement,
-      autoRefreshCheckbox: document.getElementById('autoRefreshCheckbox') as HTMLInputElement,
+      autoRefreshButton: document.getElementById('autoRefreshButton') as HTMLButtonElement,
       promptInput: document.getElementById('promptInput') as HTMLInputElement
     };
 
@@ -73,9 +73,9 @@ export class Toolbar {
       });
     }
 
-    // Auto-refresh checkbox
-    if (this.elements.autoRefreshCheckbox) {
-      this.elements.autoRefreshCheckbox.addEventListener('change', () => {
+    // Auto-refresh button
+    if (this.elements.autoRefreshButton) {
+      this.elements.autoRefreshButton.addEventListener('click', () => {
         this.handleToggleAutoRefresh();
       });
     }
