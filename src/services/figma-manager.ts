@@ -5,6 +5,8 @@ export class FigmaManager {
 
   constructor() {
     this.logger = new Logger();
+    figma.loadFontAsync({ family: "Inter", style: "Medium" })
+    figma.loadFontAsync({ family: "Inter", style: "Bold" })
   }
 
   generateTemplateCode(): string {
