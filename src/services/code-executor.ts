@@ -72,6 +72,46 @@ return 0;
 
     const dynamicPrependCode = `
 
+uuid = String(Math.round(Math.random()*10000))
+
+
+function updateOrEnter(name,masterElement=null){
+    //If the element already exists on the frame take it
+    var element = FigmaFrame.child(name)
+    if (!element){
+        if (masterElement != null){
+            element = masterElement.clone()
+        }else{
+            //Find a generated element to clone
+            element = FigmaFrame.findChild(x => x.getPluginData('gen')!=='')
+            
+            //If not as a backup find the first element
+            if (!element){
+                element = FirstChild.clone()
+                FirstChild.remove()
+            }else{
+                element = element.clone()
+                }
+        }
+        element.name = name
+    }
+    //Update the random UUID to the current one
+    element.setPluginData("gen",uuid)
+    return element;
+}
+
+function removeOldElements(action=(elt)=>elt.remove()){
+    FigmaFrame.findAllWithCriteria({
+    pluginData: {
+        keys: ["gen"]
+    }
+    }).forEach((elt) => {
+        if (elt.getPluginData("gen") != uuid){
+            action(elt)
+        }
+    }
+    )
+}
     function dataTableToObject(DATA_TABLE_NAME) {
     const dataTable = figma.currentPage.findChild(x => x.name === DATA_TABLE_NAME);
     if (!dataTable) {
@@ -318,7 +358,23 @@ function _setText(node, name, text){
       
     }
   }
-        function parseTSV(tsvText) {
+    function parseTSVTable(tsvText) {
+  const lines = tsvText.trim().split('\\n');
+  if (lines.length === 0) return [];
+  
+  const headers = lines[0].split('\\t');
+  const data = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split('\\t');
+    const row = {};
+    for (let j = 0; j < headers.length; j++) {
+      row[headers[j]] = values[j] || "";
+    }
+    data.push(row);
+  }
+  return data;
+  }
+        function parseTSVMatrix(tsvText) {
   const lines = tsvText.trim().split('\\n');
   if (lines.length === 0) return [];
 
@@ -341,7 +397,7 @@ function _setText(node, name, text){
     function delay(ms){
       return new Promise(resolve => setTimeout(resolve, ms));
     }
-      return (async () =>  {`
+      `
 export class CodeExecutor {
   private logger: Logger;
   private errorHandler: ErrorHandler;
@@ -365,7 +421,7 @@ export class CodeExecutor {
       
       // Add execution context and logging
       const wrappedCode = this.wrapCodeWithContext(sanitizedCode, logs, frameId);
-      
+      console.log('Wrapped code:', wrappedCode);
       this.logger.log('Executing code...');
       const startTime = Date.now();
       
@@ -420,10 +476,15 @@ export class CodeExecutor {
            throw new Error('Please select a frame or lock to a specific frame');
          }`;
 
-    return `${dynamicPrependCode}
+    return `
+    return (async () =>  {
       ${frameSetupCode}
       let FirstChild = FigmaFrame.children[0];
-      let fonts = [...new Set(FigmaFrame.findAll(node => node.type === "TEXT").map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
+      ${dynamicPrependCode}
+      //TODO needs to check for mixed fonts within one text node
+      let fonts = [...new Set(FigmaFrame.findAllWithCriteria({
+  types: ['TEXT']
+}).map(node => node.fontName.family + '***' + node.fontName.style))].map(font => {
             const [family, style] = font.split('***');
             console.log(family, style);
             return { family, style }
@@ -431,6 +492,7 @@ export class CodeExecutor {
             console.log("Fonts", fonts)
       try {
         for (const font of fonts) {
+          if (font.family === "undefined" || font.style === "undefined") continue;
           await figma.loadFontAsync({ family: font.family, style: font.style });
         }
         console.log("Fonts loaded");
@@ -438,25 +500,11 @@ export class CodeExecutor {
         console.error("font error", e);
       }
         let originalChildren = FigmaFrame.children
-        if (typeof preProcess === 'function') {
-          preProcess();
-      }else{
+        
       
-      originalChildren.slice(1).forEach(child => {
-          child.remove();
-        });
-      }
       ${code}
-      if (typeof postProcess === 'function') {
-      postProcess();
-  }else{
-      originalChildren.slice(0,1).forEach(child => {
-        console.log(child)
-        child.remove();
-      });
-    }
-      preProcess = null;
-      postProcess = null;
+
+    
       
           })()
           
