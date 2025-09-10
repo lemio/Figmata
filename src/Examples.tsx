@@ -15,6 +15,41 @@ export async function barChart() {
         width={653}
       height={17}
     >
+      <Text
+        name="Name"
+        x={-41}
+        y={{
+          type: "top-bottom",
+          topOffset: 1,
+          bottomOffset: 1,
+        }}
+        fill="#000"
+        verticalAlignText="center"
+        horizontalAlignText="right"
+        fontFamily="Inter"
+        fontSize={12}
+      >
+        Name
+      </Text>
+      <Text
+        name="Value"
+        x={{
+          type: "right",
+          offset: -39,
+        }}
+        y={{
+          type: "top-bottom",
+          topOffset: 1,
+          bottomOffset: 1,
+        }}
+        fill="#000"
+        verticalAlignText="center"
+        fontFamily="Inter"
+        fontSize={12}
+      >
+        Value
+      </Text>
+
     </Frame>);
     console.log('Element created:', element);
     figma.currentPage.appendChild(element);
@@ -29,6 +64,7 @@ const node = await figma.createNodeFromJSXAsync(
       fill="#FFF"
       direction="vertical"
       spacing={30}
+      y={300}
       padding={{
         top: 79,
         right: 110,
@@ -43,7 +79,7 @@ const node = await figma.createNodeFromJSXAsync(
 
 // Ensure node is a FrameNode or AutoLayoutNode before appending children
 if ("appendChild" in node && typeof node.appendChild === "function") {
-  node.appendChild(InstanceOfElement.clone());
+  node.appendChild(InstanceOfElement.createInstance());
 }
 
 figma.currentPage.appendChild(node);
@@ -53,21 +89,25 @@ node.setPluginData('code', `
 // 
 // This code generates a bar chart using Figma's widget API.
 // 
-// You can customize the chart by modifying the BarChartElement component.
+// You can customize the chart by modifying the FigmaElementBar component.
 
-let data = [
-  { name: "Category 1", value: 100 },
-  { name: "Category 2", value: 200 },
-  { name: "Category 3", value: 300 },
-  { name: "Category 4", value: 400 }
-];
+let data = d3.tsvParse
+(\`name	value
+Category 1	120
+Category 2	230
+Category 3	360
+Category 4	400\`)
+
+print(data)
 data.forEach((item, index) => {
-    let element = FirstChild.clone(); //FigmaElementBar
-    element.setSize(item.value,17)
-    element.child("Value").setText(item.value)
-    element.child("Name").setText(item.name)
-    FigmaFrame.appendChild(element)
-})`);
+	var element = updateOrEnter(item.name)		//Select or clone an element (if the name does not exist)
+	element.setSize(item.value,17)				//Resize the element, while taking into account the Position constraints
+	element.child("Value").setText(item.value)	//Set the text of the text element named "Value"
+	element.child("Name").setText(item.name)	//Set the text of the text element named "Name"
+	FigmaFrame.appendChild(element)				//Add this element to the end of the selected frame
+})
+removeOldElements()	//Remove any elements that were created by Figmata in the past but are not updated
+`);
 figma.viewport.scrollAndZoomIntoView([node]);
 figma.notify('Element added successfully!');
 }
