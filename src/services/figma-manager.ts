@@ -66,36 +66,47 @@ export class FigmaManager {
     const height = bounds ? bounds.height : 100;
 
     return `
-let data = [
-    { "Quantity": 10, "Price": 100 },
-    { "Quantity": 20, "Price": 200 },
-    { "Quantity": 40, "Price": 300 },
-    { "Quantity": 65, "Price": 600 },
-    { "Quantity": 15, "Price": 150 }
-  ]
-data.forEach((row) => {
-\tlet element = FirstChild.clone(); //${firstElement.name}
-\telement.setSize(${width}, ${height});
+// Generated code based on the selected frame "${frame.name}"
+// 
+// This code creates elements based on the first child of the selected frame.
+// You can customize the data and element properties as needed.
+
+let data = d3.tsvParse
+(\`name	value
+Category 1	120
+Category 2	230
+Category 3	360
+Category 4	400\`)
+data.forEach((row,index) => {
+	var element = updateOrEnter("${firstElement.name}"+String(index))		//${firstElement.name}
+	element.setSize(${width}, ${height});
 ${childrenString}
-\tFigmaFrame.appendChild(element)
+	FigmaFrame.appendChild(element)
 })
+removeOldElements()	//Remove any elements that were created by Figmata in the past but are not updated
 `;
   }
 
   private getDefaultTemplate(): string {
     return `
-let data = [
-    { "Quantity": 10, "Price": 100 },
-    { "Quantity": 20, "Price": 200 },
-    { "Quantity": 40, "Price": 300 },
-    { "Quantity": 65, "Price": 600 },
-    { "Quantity": 15, "Price": 150 }
-];
+// Default template code
+
+//You can select a frame and adjust it's code or run "Generate Template Code" to get started
+//Select the bar chart example in the top bar to see how it works
+
+let data = d3.tsvParse
+(\`name	value
+Category 1	120
+Category 2	230
+Category 3	360
+Category 4	400\`)
 
 data.forEach((row, index) => {
-    // Create your elements here
+    var element = updateOrEnter("Element" + index);
+    // Manipulate your elements here
     console.log(\`Processing row \${index + 1}:\`, row);
 });
+removeOldElements()	//Remove any elements that were created by Figmata in the past but are not updated
 `;
   }
 
