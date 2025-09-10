@@ -260,6 +260,7 @@ declare module 'd3' {
 
   static getFigmataCustomTypes(): string {
     return `
+
 interface BaseNodeMixin extends PluginDataMixin, DevResourcesMixin {
   readonly id: string
   readonly parent: (BaseNode & ChildrenMixin) | null
@@ -275,12 +276,36 @@ interface BaseNodeMixin extends PluginDataMixin, DevResourcesMixin {
   getCSSAsync(): Promise<{
     [key: string]: string
   }>
+  /**
+   * Finds the first child node matching the given name.
+   * @param name - The name of the child node to find
+   * @returns The first matching child node, or null if not found
+   */
   child(name: string): SceneNode | null;
+  /**
+   * Sets the text content of a TEXT node.
+   * @param text - The text content to set
+   */
   setText(text: string): void;
+  /**
+   * Sets the fill of the node.
+   * @param color - The fill color in hex format (e.g., '#FF0000')
+   * @param opacity - The fill opacity (0 to 1), default is 1
+   */
   setFill(color: string, opacity?: number): void;
-  setStroke(color: string, width?: number): void;
+  /**
+   * Sets the stroke (border) of the node.
+   * @param color - The stroke color in hex format (e.g., '#FF0000')
+   * @param opacity - The stroke opacity (0 to 1), default is 1
+   * @param width - The stroke width in pixels, default is 1
+   */
+  setStroke(color: string, opacity?: number, width?: number): void;
+  /** Sets the vector path data for VECTOR nodes.
+  * @param vector - The SVG path data string to set
+  * @returns void
+  */
   setVector(vector: string): void;
-  /*
+  /**
   * Sets the size of the node and resized based on the current layout constraints.
   * @param width - The width to set
   * @param height - The height to set
@@ -292,12 +317,78 @@ interface BaseNodeMixin extends PluginDataMixin, DevResourcesMixin {
 
 // Figmata Custom Types and Helper Functions
 declare global {
+
+/**
+ * Parses TSV table (Tab-Separated Values) text into an array of objects.
+ * Each object represents a row, with keys as column headers.
+ * \`\`\`
+ * let data = parseTSV(
+ * \`Name\tAge
+ * Alice\t30
+ * Bob\t25\`);
+ * print(data);
+ * // Output: [{ "Name": "Alice", "Age": "30" }, { "Name": "Bob", "Age": "25" }]
+ * \`\`\`
+ * @param tsvText - The TSV formatted string
+ * @returns An array of objects representing the parsed data
+ */
+function parseTSVTable(tsvText: string): any[];
+
+
+/**
+ * Parses a TSV matrix (Tab-Separated Values) text into an object with keys as the first column.
+ * Each object represents a row, with keys as column headers.
+ * \`\`\`
+ * let data = parseTSV(
+ * \` \tCost\tSize\tPrice
+ * Product1\t100\t20\t200
+ * Product2\t150\t30\t300\`);
+ * print(data);
+ * // Output: { "Product1": { "Cost": 100, "Size": 20, "Price": 200 }, "Product2": { "Cost": 150, "Size": 30, "Price": 300 } }
+ * \`\`\`
+ * @param tsvText - The TSV formatted string
+ * @returns An array of objects representing the parsed data
+ */
+function parseTSVMatrix(tsvText: string): any[];
+
   // Global variables available in code execution context
+  /**
+   * The main frame selected or locked to in the Figma document.
+   * Where this code is connected to.
+   */
   const FigmaFrame: FrameNode;
   const FirstChild: SceneNode;
   let element: SceneNode;
   // Helper functions available in code execution context
+
+  /**
+  * Converts a data table in the Figma document to an array of objects.
+  * Each object represents a row in the table, with keys as column headers.
+  * \`\`\`
+  * let data = dataTableToObject('tableNodeId');
+  * print(data);
+  * // Output: [{ "Name": "Alice", "Age": 30 }, { "Name": "Bob", "Age": 25 }]
+  * \`\`\`
+  * @param tableId - The ID of the Figma node containing the data table
+  * @returns An arra y of objects representing the table data
+  */
+  function dataTableToObject(tableId: string): any[];
   
+  /**
+  * Updates an existing element with the given name or creates a new one if it doesn't exist.
+  * @param name - The name of the element to update or create
+  * @param masterElement - An optional master element to clone if creating a new element, by default uses the first child of FigmaFrame
+  * @returns The updated or newly created SceneNode
+  */
+  function updateOrEnter(name: string, masterElement: SceneNode | null = null): SceneNode;
+  
+  /**
+ * Removes old elements from the FigmaFrame that were not updated in the current run.
+ * Elements are identified by a custom plugin data key 'gen'.
+ * @param callback - An optional callback function to execute instead of removing elements
+ * @returns void
+ */
+  function removeOldElements(callback: (elt: SceneNode) => void = (elt) => elt.remove()): void;
   // Extended console for better logging
   interface Console {
     log(...data: any[]): void;
