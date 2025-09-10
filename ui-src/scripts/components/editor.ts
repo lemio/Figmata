@@ -1,3 +1,4 @@
+import { min } from 'd3';
 import { StateManager } from '../services/state-manager';
 import { TypeDefinitionsService } from '../services/type-definitions';
 
@@ -37,33 +38,17 @@ export class Editor {
       this.editor = window.monaco.editor.create(container, {
         value: '',
         language: 'javascript',
-        theme: 'vs',
-        fontSize: 13,
-        lineHeight: 20,
+        //Don't replace tab with spaces
+        theme: 'vs',       
         automaticLayout: true,
         minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        wordWrap: 'on',
-        renderWhitespace: 'boundary',
-        bracketPairColorization: { enabled: true },
-        suggest: {
-          showKeywords: true,
-          showSnippets: true,
-          showFunctions: true,
-          showVariables: true
-        },
-        quickSuggestions: {
-          other: true,
-          comments: false,
-          strings: false
-        }
       });
-
+      this.editor.getModel().updateOptions({ tabSize: 4, insertSpaces: false });
       // Set up event listeners
       this.setupEventListeners();
 
       // Add custom completions
-      this.setupCompletions();
+      //this.setupCompletions();
 
       // Add extra type definitions for better IntelliSense
       this.setupTypeDefinitions();
