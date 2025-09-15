@@ -36,6 +36,9 @@ export class FigmaManager {
     
     // Generate code for text elements if firstElement has children
     if ('children' in firstElement && firstElement.children) {
+
+      childrenString = this.generateChildrenCode(firstElement.children, 'element');
+      /*
       const elements = [...firstElement.children].reverse();
       elements.forEach((child: SceneNode) => {
         switch (child.type) {
@@ -58,7 +61,7 @@ export class FigmaManager {
             childrenString += `\t//element.child('${child.name}')`;
         }
         childrenString += '\n';
-      });
+      });*/
     }
 
     const bounds = firstElement.absoluteBoundingBox;
@@ -116,5 +119,46 @@ removeOldElements()	//Remove any elements that were created by Figmata in the pa
 
   resizeUI(width: number, height: number): void {
     figma.ui.resize(width, height);
+  }
+
+
+  private generateChildrenCode(children: readonly SceneNode[], parentPath: string): string {
+    let code = '';
+    const elements = [...children].reverse();
+    
+    elements.forEach((child: SceneNode) => {
+      const currentPath = `${parentPath}.child("${child.name}")`;
+      
+      switch (child.type) {
+        case 'TEXT':
+          code += `\t${currentPath}.setText("${(child as TextNode).characters}")\n`;
+          break;
+        case 'RECTANGLE':
+          // eslint-disable-next-line no-case-declarations
+          const fill = (child as RectangleNode).fills[0];
+          if (fill && 'color' in fill) {
+            // eslint-disable-next-line no-case-declarations
+            const { r, g, b } = fill.color;
+            // eslint-disable-next-line no-case-declarations
+            const hex = `#${((1 << 24) + (Math.round(r * 255) << 16) + (Math.round(g * 255) << 8) + Math.round(b * 255)).toString(16).slice(1)}`;
+            code += `\t${currentPath}.setFill("${hex}", ${fill.opacity})\n`;
+          }
+          break;
+        case 'VECTOR':
+          if ((child as VectorNode).vectorPaths && (child as VectorNode).vectorPaths.length > 0) {
+            code += `\t${currentPath}.setVector("${(child as VectorNode).vectorPaths[0]}")\n`;
+          }
+          break;
+        default:
+          code += `\t//${currentPath}\n`;
+      }
+      
+      // Recursively process children if they exist
+      if ('children' in child && child.children && child.children.length > 0) {
+        code += this.generateChildrenCode(child.children, currentPath);
+      }
+    });
+    
+    return code;
   }
 }
