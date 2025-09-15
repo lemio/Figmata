@@ -319,6 +319,8 @@ class PluginController {
     } else {
       // Generate initial template and show UI
       await this.sendInitialData();
+      //Make sure the UI renders the newly generated code.
+      await this.handleSelectionChange();
     }
   }
 
@@ -344,6 +346,13 @@ class PluginController {
         timestamp: Date.now()
       });
     } else {
+      this.sendToUI({
+        type: MESSAGE_TYPES.PLUGIN_READY,
+        frames: this.frameManager.getAvailableFrames(),
+        initialCode: `//No frame selected. Please select a frame to edit code from the list above or by selecting a figma frame, or lock to a specfic frame.`,
+        selectedFrameId: 'Select Frame...',
+        timestamp: Date.now()
+      });
       // No frame selected, just update the frames list
       await this.refreshFrames();
     }
