@@ -349,7 +349,11 @@ class PluginController {
       this.sendToUI({
         type: MESSAGE_TYPES.PLUGIN_READY,
         frames: this.frameManager.getAvailableFrames(),
-        initialCode: `//No frame selected. Please select a frame to edit code from the list above or by selecting a figma frame, or lock to a specfic frame.`,
+        initialCode: `/*
+No frame selected. 
+Please select a frame to edit code from the dropdown ▼ list above,
+by selecting a Figma Frame on the current page 🖼️, or lock 🔒 to a specific frame.
+*/`,
         selectedFrameId: 'Select Frame...',
         timestamp: Date.now()
       });
