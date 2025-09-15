@@ -222,7 +222,8 @@ const setSize = function(width, height) {
     () => figma.createText(),
     () => figma.createLine(),
     () => figma.createPolygon(),
-    () => figma.createStar()
+    () => figma.createStar(),
+    () => figma.group([figma.createRectangle()],figma.currentPage)
   ];
   
   const prototypesEnhanced = new Set();
