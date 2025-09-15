@@ -164,9 +164,16 @@ function enhanceFigmaAPI() {
 
   const child = function(name) {
     if (!this.children) {
+      print('child("' + name + '") not found in "' + this.name + '" element has no children');
       return null;
         }
-    return this.findChild(child => child.name === name) || null;
+    foundElement = this.findChild(child => child.name === name);
+    if (!foundElement) {
+      print('child("' + name + '") not found in "' + this.name + '" possible children: ' + this.children.map(c => '"'+c.name+'"').join(', '));
+      return null;
+    } else {
+        return foundElement;
+      }
 };
 
   const setVector = function(vector) {

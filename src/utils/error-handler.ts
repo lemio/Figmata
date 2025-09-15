@@ -14,7 +14,7 @@ export class ErrorHandler {
     this.logger.error(`Code execution failed at line ${lineNumber}:`, error);
     
     return {
-      message: errorMessage,
+      message: "line " + lineNumber + ": " + errorMessage,
       line: lineNumber
     };
   }
@@ -26,16 +26,15 @@ export class ErrorHandler {
   private getLineNumberFromStack(error: Error): number {
     const stack = error.stack?.toString().split(/\r\n|\n/);
     const frameRE = /([0-9]+)\)*$/;
-    let lineNumber = 0;
-    
-    if (stack) {
-      stack.shift(); // Remove the first line which is the error message
-      
-      while (stack.length > 1) {
+    let lineNumber = -1000;
+    console.log('error stack:', stack)
+    if (stack) {      
+      while (stack.length) {
         const frame = stack.shift() || '';
         const match = frameRE.exec(frame);
         if (match) {
-          lineNumber = Number(match[1]);
+          //TODO this number should not be hardcoded
+          lineNumber = Number(match[1]) -366;
           break;
         }
       }

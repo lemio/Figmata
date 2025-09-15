@@ -370,11 +370,11 @@ class PluginController {
       success: false,
       logs: [{
         type: 'error',
-        message: errorInfo.message,
+        message: "line " + errorInfo.line + ": " + errorInfo.message,
         line: errorInfo.line,
         timestamp: Date.now()
       }],
-      error: errorInfo.message,
+      error: "line " + errorInfo.line + ": " + errorInfo.message,
       timestamp: Date.now()
     });
   }
