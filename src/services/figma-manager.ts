@@ -9,7 +9,7 @@ export class FigmaManager {
     figma.loadFontAsync({ family: "Inter", style: "Bold" })
   }
 
-  generateTemplateCode(): string {
+  async generateTemplateCode(): Promise<string> {
     const selection = figma.currentPage.selection[0];
     
     if (!selection || selection.type !== 'FRAME') {
@@ -23,10 +23,10 @@ export class FigmaManager {
       return existingCode;
     }
 
-    return this.generateCodeFromFrame(frame);
+    return await this.generateCodeFromFrame(frame);
   }
 
-  private generateCodeFromFrame(frame: FrameNode): string {
+  private async generateCodeFromFrame(frame: FrameNode): Promise<string> {
     if (frame.children.length === 0) {
       return this.getDefaultTemplate();
     }
@@ -37,7 +37,7 @@ export class FigmaManager {
     // Generate code for text elements if firstElement has children
     if ('children' in firstElement && firstElement.children) {
 
-      childrenString = this.generateChildrenCode(firstElement.children, 'element');
+      childrenString = await this.generateChildrenCode(firstElement.children, 'element');
       /*
       const elements = [...firstElement.children].reverse();
       elements.forEach((child: SceneNode) => {
@@ -122,11 +122,11 @@ removeOldElements()	//Remove any elements that were created by Figmata in the pa
   }
 
 
-  private generateChildrenCode(children: readonly SceneNode[], parentPath: string): string {
+  private async generateChildrenCode(children: readonly SceneNode[], parentPath: string): Promise<string> {
     let code = '';
     const elements = [...children].reverse();
-    
-    elements.forEach((child: SceneNode) => {
+
+    for (const child of elements) {
       const currentPath = `${parentPath}.child("${child.name}")`;
       
       switch (child.type) {
@@ -146,7 +146,26 @@ removeOldElements()	//Remove any elements that were created by Figmata in the pa
           break;
         case 'VECTOR':
           if ((child as VectorNode).vectorPaths && (child as VectorNode).vectorPaths.length > 0) {
-            code += `\t${currentPath}.setVector("${(child as VectorNode).vectorPaths[0]}")\n`;
+            code += `\t${currentPath}.setVector(${JSON.stringify((child as VectorNode).vectorPaths[0].data)})\n`;
+          }
+          break;
+
+        case 'INSTANCE':
+          //Set the variant properties of the instance (and list the options commented out)
+          {
+            const instance = child
+            const mainComponent = await instance.getMainComponentAsync();
+            if (mainComponent.parent) {
+              if (mainComponent.parent.type === 'COMPONENT_SET') {
+                const props = mainComponent.parent.componentPropertyDefinitions;
+                code += `\t${currentPath}.setProperties({\n`
+                Object.keys(props).forEach(prop => {
+                  const currentValue = instance.componentProperties[prop].value;
+                  code += `\t\t"${prop}":"${currentValue}",// ${props[prop].variantOptions.sort().join(', ')}\n `;
+                });
+                code += `\t})\n`
+              }
+            }
           }
           break;
         default:
@@ -155,10 +174,10 @@ removeOldElements()	//Remove any elements that were created by Figmata in the pa
       
       // Recursively process children if they exist
       if ('children' in child && child.children && child.children.length > 0) {
-        code += this.generateChildrenCode(child.children, currentPath);
+        code += await this.generateChildrenCode(child.children, currentPath);
       }
-    });
-    
+    }
+
     return code;
   }
 }

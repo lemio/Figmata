@@ -47,7 +47,7 @@ class PluginController {
 
   private async sendInitialData(): Promise<void> {
     const frames = this.frameManager.getAvailableFrames();
-    const initialCode = this.figmaManager.generateTemplateCode();
+    const initialCode = await this.figmaManager.generateTemplateCode();
     const currentFrame = this.frameManager.getCurrentFrame();
     
     this.sendToUI({
@@ -203,7 +203,7 @@ class PluginController {
       }
 
       const code = await this.frameManager.getFrameCode(frameId);
-      const finalCode = code || this.figmaManager.generateTemplateCode();
+      const finalCode = code || await this.figmaManager.generateTemplateCode();
       
       // Send combined message with frame selection and code
       this.sendToUI({
@@ -269,7 +269,7 @@ class PluginController {
       const lockedFrame = this.frameManager.getLockedFrame();
       if (lockedFrame) {
         const code = await this.frameManager.getFrameCode(lockedFrame.id);
-        const finalCode = code || this.figmaManager.generateTemplateCode();
+        const finalCode = code || await this.figmaManager.generateTemplateCode();
         
         this.sendToUI({
           type: MESSAGE_TYPES.PLUGIN_READY,
@@ -284,7 +284,7 @@ class PluginController {
     // If we just unlocked, update UI with the previously locked frame (now selected)
     if (wasLocked && !isNowLocked && previousLockedFrame) {
       const code = await this.frameManager.getFrameCode(previousLockedFrame.id);
-      const finalCode = code || this.figmaManager.generateTemplateCode();
+      const finalCode = code || await this.figmaManager.generateTemplateCode();
       
       this.sendToUI({
         type: MESSAGE_TYPES.PLUGIN_READY,
@@ -333,7 +333,7 @@ class PluginController {
     if (currentFrame) {
       // Always load existing code for this frame (regardless of autorefresh state)
       const code = await this.frameManager.getFrameCode(currentFrame.id);
-      const finalCode = code || this.figmaManager.generateTemplateCode();
+      const finalCode = code || await this.figmaManager.generateTemplateCode();
       
       // Send a combined message with frame info and code
       this.sendToUI({
