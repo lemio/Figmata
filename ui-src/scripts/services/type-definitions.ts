@@ -397,6 +397,21 @@ function parseTSVMatrix(tsvText: string): any[];
     time(label: string): void;
     timeEnd(label: string): void;
   }
+
+  /**
+   * Converts an ArrayBuffer to a Base64 encoded string.
+   * @param arrayBuffer - The ArrayBuffer to convert
+   * @returns The Base64 encoded string
+   */
+  function base64ArrayBuffer(arrayBuffer: ArrayBuffer): string;
+
+  /**
+   * Asks an AI model for a response based on the provided messages.
+   * The response is expected to contain JSON data.
+   * @param messages - An array of message objects to send to the AI model
+   * @returns A promise that resolves to the extracted JSON string from the AI response
+   */
+  function getAiResponse(messages: { role: 'user' | 'system' | 'assistant'; content: any }[]): Promise<string>;
 }
 
 // Common data structures for examples
