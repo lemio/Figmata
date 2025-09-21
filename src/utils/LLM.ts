@@ -1,4 +1,4 @@
-import {endPoint, apiKey} from './Authentication';
+import {endPoint, apiKey} from '../../../Authentication';
 
 export async function getAiResponse(messages) {
     const response = await fetch(`${endPoint}/chat/completions?api-version=2025-01-01-preview`, {  
