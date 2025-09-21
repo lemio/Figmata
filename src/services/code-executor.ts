@@ -9,8 +9,10 @@ import { InputValidator } from '../utils/validators';
 import { LogEntry } from '../../shared/types/messages';
 import * as d3 from '../../node_modules/d3';
 import {convertArcsToCubics} from '../utils/SVGUtils';
+import {base64ArrayBuffer} from '../utils/ImageUtils';
 //import d3-sankey
 import * as d3Sankey from 'd3-sankey';
+import { getAiResponse } from '@src/utils/LLM';
 // Attach sankey to d3 so you can use d3.sankey syntax
 // Map all exported members of d3Sankey to d3 under their own names
 Object.keys(d3Sankey).forEach(key => {
@@ -533,7 +535,10 @@ export class CodeExecutor {
         dynamicPrependCode,
         d3,
         d3Sankey,
-        convertArcsToCubics
+        convertArcsToCubics,
+        base64ArrayBuffer,
+        getAiResponse,
+        // Add any other globals or utilities you want to expose to the executed code
       };
       const paramNames = Object.keys(context);
       const paramValues = Object.values(context);
