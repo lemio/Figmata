@@ -37,7 +37,7 @@ export class FigmaManager {
     // Generate code for text elements if firstElement has children
     if ('children' in firstElement && firstElement.children) {
 
-      childrenString = await this.generateChildrenCode(firstElement.children, 'element');
+      childrenString = await this.generateChildrenCode(firstElement, 'element');
       /*
       const elements = [...firstElement.children].reverse();
       elements.forEach((child: SceneNode) => {
@@ -122,16 +122,15 @@ removeOldElements()	//Remove any elements that were created by Figmata in the pa
   }
 
 
-  private async generateChildrenCode(children: readonly SceneNode[], parentPath: string): Promise<string> {
+  private async generateChildrenCode(child: SceneNode, parentPath: string): Promise<string> {
     let code = '';
-    const elements = [...children].reverse();
-
-    for (const child of elements) {
-      const currentPath = `${parentPath}.child("${child.name}")`;
-      
+    
+   
+    const currentPath = `${parentPath}`
+    
       switch (child.type) {
         case 'TEXT':
-          code += `\t${currentPath}.setText("${(child as TextNode).characters}")\n`;
+          code += `\t${currentPath}.setText(\`${(child as TextNode).characters}\`)\n`;
           break;
         case 'RECTANGLE':
           // eslint-disable-next-line no-case-declarations
@@ -146,7 +145,7 @@ removeOldElements()	//Remove any elements that were created by Figmata in the pa
           break;
         case 'VECTOR':
           if ((child as VectorNode).vectorPaths && (child as VectorNode).vectorPaths.length > 0) {
-            code += `\t${currentPath}.setVector(${JSON.stringify((child as VectorNode).vectorPaths[0].data)})\n`;
+            code += `\t//${currentPath}.setVector(${JSON.stringify((child as VectorNode).vectorPaths[0].data)})\n`;
           }
           break;
 
@@ -173,11 +172,15 @@ removeOldElements()	//Remove any elements that were created by Figmata in the pa
       }
       
       // Recursively process children if they exist
-      if ('children' in child && child.children && child.children.length > 0) {
-        code += await this.generateChildrenCode(child.children, currentPath);
+      
+    if ('children' in child && child.children && child.children.length > 0) {
+        const children = child.children;
+         const elements = [...children].reverse();
+         for (const child of elements) {
+           const childPath = `${currentPath}.child("${child.name}")`;
+           code += await this.generateChildrenCode(child, childPath);
+         }
       }
-    }
-
     return code;
   }
 }
